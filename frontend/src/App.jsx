@@ -1,4 +1,4 @@
-import { useEffect, useReducer } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import { apiUrl, socketUrl } from './ws';
 import VideoPanels from './components/VideoPanels';
 import MetricsCharts from './components/MetricsCharts';
@@ -43,17 +43,31 @@ function reducer(state, action) {
 
 export default function App() {
   const [state, dispatch] = useReducer(reducer, initial);
+  const [backendActive, setBackendActive] = useState(false);
+  const [uploadState, setUploadState] = useState({ busy: false, error: '' });
 
   useEffect(() => {
+    let cancelled = false;
+    const checkBackend = async () => {
+      try {
+        const response = await fetch(apiUrl('/healthz'), { cache: 'no-store' });
+        if (!response.ok) throw new Error('backend is not ready');
+        if (!cancelled) setBackendActive(true);
+      } catch {
+        if (!cancelled) setTimeout(checkBackend, 1500);
+      }
+    };
+    checkBackend();
     let attempts = 0, socket;
     const connect = () => {
       socket = new WebSocket(socketUrl());
       socket.onopen  = () => { attempts = 0; dispatch({ type: 'connected', value: true }); };
       socket.onmessage = e => { const d = JSON.parse(e.data); dispatch({ type: d.type === 'summary' ? 'summary' : 'frame', value: d }); };
-      socket.onclose = () => { dispatch({ type: 'connected', value: false }); if (attempts++ < 5) setTimeout(connect, Math.min(1000 * 2 ** attempts, 10000)); };
+      socket.onerror = () => socket.close();
+      socket.onclose = () => { dispatch({ type: 'connected', value: false }); attempts += 1; setTimeout(connect, Math.min(1000 * 2 ** attempts, 10000)); };
     };
     connect();
-    return () => socket?.close();
+    return () => { cancelled = true; socket?.close(); };
   }, []);
 
   const control = async path => {
@@ -64,9 +78,19 @@ export default function App() {
   const upload = async e => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setUploadState({ busy: true, error: '' });
     const form = new FormData();
     form.append('file', file);
-    await fetch(apiUrl('/api/upload'), { method: 'POST', body: form });
+    try {
+      const response = await fetch(apiUrl('/api/upload'), { method: 'POST', body: form });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.detail || 'Upload failed');
+      setUploadState({ busy: false, error: '' });
+    } catch (error) {
+      setUploadState({ busy: false, error: error.message });
+    } finally {
+      e.target.value = '';
+    }
   };
 
   const stats = [
@@ -78,6 +102,16 @@ export default function App() {
 
   return (
     <div id="root">
+      {!backendActive && (
+        <div className="boot-screen">
+          <div className="boot-card">
+            <div className="loader-ring" />
+            <h2>Connecting to FogPilot</h2>
+            <p>Waiting for the backend to become active…</p>
+            <span>Do not close this window</span>
+          </div>
+        </div>
+      )}
       {/* ── Top Nav ── */}
       <nav className="topnav">
         <div className="nav-brand">
@@ -97,11 +131,12 @@ export default function App() {
           <button className="btn btn-danger" onClick={() => control('stop')}>
             ■ Stop
           </button>
-          <label className="upload-btn">
-            ↑ Upload
-            <input type="file" accept="video/*" onChange={upload} />
+          <label className={`upload-btn${uploadState.busy ? ' disabled' : ''}`}>
+            {uploadState.busy ? 'Uploading…' : '↑ Upload media'}
+            <input type="file" accept="video/*,image/*" onChange={upload} disabled={uploadState.busy} />
           </label>
         </div>
+        {uploadState.error && <div className="upload-error">{uploadState.error}</div>}
       </nav>
 
       {/* ── Page ── */}

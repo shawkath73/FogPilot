@@ -50,6 +50,42 @@ body {
 /* ── App shell ── */
 #root { display: flex; flex-direction: column; min-height: 100vh; }
 
+.boot-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 35%, #18253b 0%, #070a11 55%, #020308 100%);
+}
+
+.boot-card {
+  width: min(360px, calc(100vw - 40px));
+  padding: 32px 28px;
+  border: 1px solid var(--border-light);
+  border-radius: 18px;
+  background: rgba(24, 28, 39, .94);
+  box-shadow: 0 20px 80px rgba(0, 0, 0, .6);
+  text-align: center;
+  animation: bootIn .35s ease both;
+}
+
+.boot-card h2 { margin: 18px 0 8px; color: var(--txt-1); font-size: .95rem; }
+.boot-card p { color: var(--txt-2); font-size: .78rem; margin-bottom: 16px; }
+.boot-card span { color: var(--txt-3); font-size: .68rem; }
+.loader-ring {
+  width: 48px;
+  height: 48px;
+  margin: auto;
+  border: 3px solid rgba(45, 212, 191, .15);
+  border-top-color: var(--teal);
+  border-right-color: var(--teal);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes bootIn { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+
 /* =========================================================
    Top nav  (like CaterEase's nav bar)
    ========================================================= */
@@ -207,6 +243,20 @@ body {
 }
 
 .upload-btn input { display: none; }
+.upload-btn.disabled { opacity: .55; pointer-events: none; }
+.upload-error {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 32px;
+  z-index: 10;
+  max-width: 360px;
+  padding: 9px 12px;
+  border: 1px solid rgba(248, 113, 113, .35);
+  border-radius: var(--r-sm);
+  background: #2b151d;
+  color: var(--red);
+  font-size: .74rem;
+}
 
 /* =========================================================
    Page content

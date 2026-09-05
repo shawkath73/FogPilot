@@ -39,6 +39,7 @@ _stream_task: asyncio.Task[None] | None = None
 _running = False
 _frame_id = 0
 _video_path: str | None = None
+_media_kind: str | None = None
 
 
 class ConfigUpdate(BaseModel):
@@ -67,12 +68,18 @@ async def _broadcast(payload: dict[str, Any]) -> None:
 
 
 async def _demo_stream() -> None:
-    global _frame_id, _video_path
+    global _frame_id, _video_path, _media_kind
     capture = cv2.VideoCapture(_video_path) if _video_path else None
+    still = cv2.imread(_video_path) if _video_path and _media_kind == "image" else None
+    if _media_kind == "image" and still is None:
+        event("media_read_error", media_type="image")
+        return
     try:
         while _running:
             _frame_id += 1
-            if capture:
+            if _media_kind == "image":
+                fog = still.copy()
+            elif capture:
                 success, fog = capture.read()
                 if not success:
                     capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
@@ -151,7 +158,7 @@ async def start() -> dict[str, str]:
 
 @app.post("/api/stop")
 async def stop() -> dict[str, str]:
-    global _running, _stream_task, _video_path
+    global _running, _stream_task, _video_path, _media_kind
     _running = False
     if _stream_task:
         _stream_task.cancel()
@@ -162,6 +169,7 @@ async def stop() -> dict[str, str]:
         except FileNotFoundError:
             pass
         _video_path = None
+        _media_kind = None
     event("stream_stopped")
     return {"status": "stopped"}
 
@@ -182,15 +190,16 @@ def update_config(update: ConfigUpdate) -> dict[str, Any]:
 
 
 @app.post("/api/upload")
-async def upload_video(file: UploadFile = File(...)) -> dict[str, str]:
-    global _video_path
-    allowed = {".mp4", ".mov", ".avi", ".mkv", ".webm"}
+async def upload_media(file: UploadFile = File(...)) -> dict[str, str]:
+    global _video_path, _media_kind, _running, _stream_task
+    video_extensions = {".mp4", ".mov", ".avi", ".mkv", ".webm"}
+    image_extensions = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
     suffix = Path(file.filename or "").suffix.lower()
-    if suffix not in allowed:
-        raise HTTPException(status_code=415, detail="unsupported video type")
+    if suffix not in video_extensions | image_extensions:
+        raise HTTPException(status_code=415, detail="unsupported media type; use a video or image file")
     data = await file.read(settings.max_upload_bytes + 1)
     if len(data) > settings.max_upload_bytes:
-        raise HTTPException(status_code=413, detail="video exceeds configured size limit")
+        raise HTTPException(status_code=413, detail="media exceeds configured size limit")
     if _video_path:
         try:
             os.unlink(_video_path)
@@ -199,8 +208,29 @@ async def upload_video(file: UploadFile = File(...)) -> dict[str, str]:
     with tempfile.NamedTemporaryFile(prefix="fogpilot-", suffix=suffix, delete=False) as target:
         target.write(data)
         _video_path = target.name
-    event("video_uploaded", filename=file.filename, bytes=len(data))
-    return {"status": "accepted", "filename": file.filename or "video"}
+    _media_kind = "image" if suffix in image_extensions else "video"
+    if _media_kind == "image":
+        decoded = cv2.imdecode(np.frombuffer(data, dtype=np.uint8), cv2.IMREAD_COLOR)
+        valid = decoded is not None
+    else:
+        probe = cv2.VideoCapture(_video_path)
+        valid = bool(probe.isOpened())
+        probe.release()
+    if not valid:
+        os.unlink(_video_path)
+        _video_path = None
+        _media_kind = None
+        raise HTTPException(status_code=422, detail="file could not be decoded as a valid image or video")
+    if not _running:
+        _running = True
+        _stream_task = asyncio.create_task(_demo_stream())
+    event("media_uploaded", filename=file.filename, media_type=_media_kind, bytes=len(data))
+    return {"status": "accepted", "media_type": _media_kind, "filename": file.filename or "media"}
+
+
+@app.get("/api/status")
+def status() -> dict[str, bool | str | None]:
+    return {"backend_active": True, "stream_running": _running, "media_type": _media_kind}
 
 
 @app.websocket("/ws")

@@ -50,9 +50,9 @@ class ConfigUpdate(BaseModel):
     max_escalations: int = Field(ge=0)
 
 
-def _image_data(frame: np.ndarray) -> str:
-    frame = cv2.resize(frame, (320, 180), interpolation=cv2.INTER_AREA)
-    success, encoded = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
+def _image_data(frame: np.ndarray, size: tuple[int, int] = (320, 180), quality: int = 60) -> str:
+    frame = cv2.resize(frame, size, interpolation=cv2.INTER_AREA)
+    success, encoded = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, quality])
     if not success:
         return ""
     return "data:image/jpeg;base64," + base64.b64encode(encoded).decode("ascii")
@@ -102,6 +102,13 @@ async def _demo_stream() -> None:
                 fog = cv2.addWeighted(raw, 0.5, np.full_like(raw, 205), 0.5, 0)
             result = orchestrator.process_frame(fog, _frame_id, 30.0)
             metrics = result.metrics
+            algorithm_images: dict[str, str] = {}
+            for algorithm, worker in orchestrator.workers.items():
+                try:
+                    candidate = result.frame if algorithm == result.decision.selected_algorithm else worker.process(fog)
+                    algorithm_images[algorithm] = _image_data(candidate, (220, 124), 48)
+                except Exception as exc:
+                    event("algorithm_preview_error", frame_id=_frame_id, algorithm=algorithm, error=str(exc))
             payload = {
                 "frame_id": _frame_id, "algorithm": result.decision.selected_algorithm,
                 "reason": result.decision.reason, "fps": round(1000 / max(metrics.processing_time_ms, 0.01), 2),
@@ -109,6 +116,7 @@ async def _demo_stream() -> None:
                 "degraded_output": result.verdict.degraded_output,
                 "escalation": {"reason": result.verdict.escalation_instruction} if result.verdict.escalation_instruction else None,
                 "raw_image": _image_data(fog), "output_image": _image_data(result.frame),
+                "algorithm_images": algorithm_images,
             }
             try:
                 database.record(metrics.to_dict(), result.verdict.degraded_output)

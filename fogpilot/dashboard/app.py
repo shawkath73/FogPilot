@@ -73,6 +73,12 @@ async def _demo_stream() -> None:
     global _frame_id, _video_path, _media_kind
     capture = cv2.VideoCapture(_video_path) if _video_path else None
     still = cv2.imread(_video_path) if _video_path and _media_kind == "image" else None
+    if _media_kind == "video" and (capture is None or not capture.isOpened()):
+        event("media_read_error", media_type="video", reason="video capture could not be opened")
+        await _broadcast({"type": "media_error", "message": "The MP4 could not be decoded by the backend."})
+        if capture:
+            capture.release()
+        return
     if _media_kind == "image" and still is None:
         event("media_read_error", media_type="image")
         return
@@ -85,7 +91,11 @@ async def _demo_stream() -> None:
                 success, fog = capture.read()
                 if not success:
                     capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                    continue
+                    success, fog = capture.read()
+                    if not success:
+                        event("media_read_error", media_type="video", reason="video frame could not be decoded")
+                        await _broadcast({"type": "media_error", "message": "The MP4 was accepted but no video frames could be decoded."})
+                        break
             else:
                 raw = np.zeros((360, 640, 3), dtype=np.uint8)
                 cv2.rectangle(raw, (100, 80), (540, 290), (45, 125, 220), -1)
@@ -245,7 +255,10 @@ def _valid_image(path: str) -> bool:
 def _valid_video(path: str) -> bool:
     probe = cv2.VideoCapture(path)
     try:
-        return bool(probe.isOpened())
+        if not probe.isOpened():
+            return False
+        success, frame = probe.read()
+        return bool(success and frame is not None and frame.size)
     finally:
         probe.release()
 

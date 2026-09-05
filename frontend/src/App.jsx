@@ -44,7 +44,12 @@ export default function App() {
     const connect = () => {
       socket = new WebSocket(socketUrl());
       socket.onopen = () => { retry = 0; dispatch({ type: 'connected', value: true }); };
-      socket.onmessage = event => { const data = JSON.parse(event.data); dispatch({ type: data.type === 'summary' ? 'summary' : 'frame', value: data }); };
+      socket.onmessage = event => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'summary') dispatch({ type: 'summary', value: data });
+        else if (data.type === 'media_error') setUpload({ busy: false, progress: 0, phase: '', error: data.message, warning: '' });
+        else dispatch({ type: 'frame', value: data });
+      };
       socket.onerror = () => socket.close();
       socket.onclose = () => { dispatch({ type: 'connected', value: false }); if (!stopped) setTimeout(connect, Math.min(1000 * 2 ** ++retry, 10000)); };
     };

@@ -51,8 +51,8 @@ class ConfigUpdate(BaseModel):
 
 
 def _image_data(frame: np.ndarray) -> str:
-    frame = cv2.resize(frame, (480, 270), interpolation=cv2.INTER_AREA)
-    success, encoded = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 75])
+    frame = cv2.resize(frame, (320, 180), interpolation=cv2.INTER_AREA)
+    success, encoded = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
     if not success:
         return ""
     return "data:image/jpeg;base64," + base64.b64encode(encoded).decode("ascii")
@@ -105,7 +105,7 @@ async def _demo_stream() -> None:
             except Exception as exc:
                 event("database_record_error", error=str(exc), frame_id=_frame_id)
             await _broadcast(payload)
-            await asyncio.sleep(1 / 15)
+            await asyncio.sleep(1 / 10)
     finally:
         if capture:
             capture.release()

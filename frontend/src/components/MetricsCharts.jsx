@@ -1,6 +1,6 @@
 import {
   CartesianGrid, Cell, Legend, Line, LineChart,
-  Pie, PieChart, ReferenceLine, ResponsiveContainer,
+  Pie, PieChart, ReferenceLine, ResponsiveContainer, BarChart, Bar,
   Tooltip, XAxis, YAxis,
 } from 'recharts';
 
@@ -75,6 +75,23 @@ export default function MetricsCharts({ history, usage }) {
           </ResponsiveContainer>
         </div>
       </div>
+
+        <div className="chart-card">
+          <div className="chart-card-header">Routing map</div>
+          <div className="chart-card-body">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={Object.entries(usage).map(([name, value]) => ({ name, value }))} layout="vertical" margin={{ top: 4, right: 12, left: 2, bottom: 0 }}>
+                <CartesianGrid stroke={GRID} horizontal={false} />
+                <XAxis type="number" hide />
+                <YAxis type="category" dataKey="name" tick={TICK} width={52} />
+                <Tooltip contentStyle={TIP} />
+                <Bar dataKey="value" radius={[0, 5, 5, 0]}>
+                  {Object.keys(usage).map(name => <Cell key={name} fill={COLORS[name]} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
     </>
   );
 }

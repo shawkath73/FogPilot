@@ -26,7 +26,7 @@ function reducer(state, action) {
 export default function App() {
   const [state, dispatch] = useReducer(reducer, initial);
   const [backendActive, setBackendActive] = useState(false);
-  const [upload, setUpload] = useState({ busy: false, progress: 0, error: '', warning: '' });
+  const [upload, setUpload] = useState({ busy: false, progress: 0, phase: '', error: '', warning: '' });
   const uploadRequest = useRef(null);
 
   useEffect(() => {
@@ -58,35 +58,39 @@ export default function App() {
     event.target.value = '';
     if (!file) return;
     if (file.size > MAX_UPLOAD_BYTES) {
-      setUpload({ busy: false, progress: 0, error: '', warning: `${file.name} is too large. Maximum upload size is 100 MB.` });
+      setUpload({ busy: false, progress: 0, phase: '', error: '', warning: `${file.name} is too large. Maximum upload size is 100 MB.` });
       return;
     }
-    setUpload({ busy: true, progress: 0, error: '', warning: '' });
+    dispatch({ type: 'media_removed' });
+    setUpload({ busy: true, progress: 0, phase: 'Uploading file…', error: '', warning: '' });
     const data = new FormData(); data.append('file', file);
     try {
       await new Promise((resolve, reject) => {
         const request = new XMLHttpRequest();
         uploadRequest.current = request;
         request.open('POST', apiUrl('/api/upload'));
+        request.timeout = 15 * 60 * 1000;
         request.upload.onprogress = event => {
-          if (event.lengthComputable) setUpload(current => ({ ...current, progress: Math.round(event.loaded / event.total * 100) }));
+          if (event.lengthComputable) setUpload(current => ({ ...current, phase: `Uploading ${Math.round(event.loaded / event.total * 100)}%`, progress: Math.round(event.loaded / event.total * 100) }));
         };
         request.onload = () => {
-          const result = JSON.parse(request.responseText || '{}');
+          let result = {};
+          try { result = JSON.parse(request.responseText || '{}'); } catch { reject(new Error('Backend returned an invalid upload response')); return; }
           if (request.status >= 200 && request.status < 300) resolve(result);
           else reject(new Error(result.detail || 'Upload failed'));
         };
         request.onerror = () => reject(new Error('Network error while uploading'));
+        request.ontimeout = () => reject(new Error('Upload timed out. Try a smaller video or check the Render service logs.'));
         request.onabort = () => reject(new Error('Upload cancelled'));
         request.send(data);
       });
-      setUpload({ busy: false, progress: 100, error: '', warning: '' });
-    } catch (error) { setUpload({ busy: false, progress: 0, error: error.message, warning: '' }); }
+      setUpload({ busy: false, progress: 100, phase: 'Stream active', error: '', warning: '' });
+    } catch (error) { setUpload({ busy: false, progress: 0, phase: '', error: error.message, warning: '' }); }
     finally { uploadRequest.current = null; }
   };
   const cancelUpload = () => {
     uploadRequest.current?.abort();
-    setUpload(current => ({ ...current, busy: false, error: 'Upload cancelled.' }));
+    setUpload(current => ({ ...current, busy: false, phase: '', error: 'Upload cancelled.' }));
   };
   const removeMedia = async () => {
     try {
@@ -94,7 +98,7 @@ export default function App() {
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.detail || 'Could not remove media');
       dispatch({ type: 'media_removed' });
-      setUpload({ busy: false, progress: 0, error: '', warning: '' });
+      setUpload({ busy: false, progress: 0, phase: '', error: '', warning: '' });
     } catch (error) {
       setUpload(current => ({ ...current, error: error.message, warning: '' }));
     }
@@ -126,8 +130,9 @@ export default function App() {
       <header className="dashboard-header"><div><span className="eyebrow">Live monitoring</span><h1>Hi, FogPilot <em>✦</em></h1><p>Adaptive dehazing, monitored in real time.</p></div><div className="header-actions"><span className={`connection ${state.connected ? 'online' : ''}`}><i />{state.connected ? 'Connected' : 'Reconnecting'}</span><button className="report-button" onClick={downloadReport}>↓ Report</button><button className="primary-button" onClick={() => control('start')}>▶ Start</button><label className={`upload-button${upload.busy ? ' disabled' : ''}`}>{upload.busy ? `Uploading ${upload.progress}%` : '↑ Upload'}<input type="file" accept="image/*,video/*" onChange={chooseFile} disabled={upload.busy} /></label>{upload.busy && <button className="cancel-button" onClick={cancelUpload}>Cancel</button>}</div></header>
       {(upload.warning || upload.error) && <div className="upload-alert">{upload.warning || upload.error}</div>}
       {upload.busy && <div className="upload-progress"><span style={{ width: `${upload.progress}%` }} /></div>}
+      {upload.busy && <div className="upload-status">{upload.phase || 'Preparing media…'}</div>}
       <section className="overview-row"><div className="overview-main"><span className="card-label">Overall information</span><div className="overview-values"><div><b>{state.summary.frames_processed || 0}</b><small>frames processed</small></div><div><b>{state.summary.escalations || 0}</b><small>escalations</small></div></div><div className="overview-bottom"><span>30 FPS compliance <b>{state.summary.real_time_compliance_pct || 0}%</b></span><span>Mean FPS <b>{state.summary.mean_fps || 0}</b></span></div></div><div className="overview-light"><span className="card-label">Active algorithm</span><strong>{state.frame?.algorithm || '—'}</strong><small>{state.frame?.reason || 'Upload media or start a demo stream'}</small><div className="health"><i />{state.connected ? 'All agents operational' : 'Waiting for backend'}</div></div><div className="overview-light usage-summary"><div className="card-top"><span className="card-label">Routing distribution</span><span className="round-icon">◌</span></div><div className="usage-bars">{Object.entries(state.usage).map(([name, count]) => <div key={name}><span>{name}</span><i><b style={{ width: `${Math.min(100, count ? Math.max(8, count / Math.max(1, state.summary.frames_processed || count) * 100) : 0)}%` }} /></i><small>{count}</small></div>)}</div><button className="outline-button" onClick={downloadReport}>Download report ↓</button></div></section>
-      <section className="video-workspace"><div className="section-heading"><h2>Video workspace</h2><div><button className="text-button" onClick={removeMedia}>Remove media</button><span>{state.frame ? `Frame ${state.frame.frame_id}` : 'No media loaded'}</span></div></div><VideoPanels frame={state.frame} /></section>
+      <section className="video-workspace"><div className="section-heading"><h2>Video workspace</h2><div><button className="text-button" onClick={removeMedia}>Remove media</button><span>{state.frame ? `Frame ${state.frame.frame_id}` : upload.busy ? 'Preparing media…' : 'No media loaded'}</span></div></div><VideoPanels frame={state.frame} /></section>
       <section className="metrics-workspace"><div className="section-heading"><h2>Live analytics</h2><div><span>Last 100 points</span><button className="text-button" onClick={downloadReport}>Download report ↓</button></div></div><MetricsCharts history={state.history} usage={state.usage} /></section>
       <section className="bottom-grid"><EscalationLog items={state.escalations} /><ConfigPanel /></section>
     </main>

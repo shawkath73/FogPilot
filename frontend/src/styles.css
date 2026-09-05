@@ -70,6 +70,7 @@ button { cursor: pointer; }
 .cancel-button { color: #a04850; border-color: #ddb7bb; }
 .upload-progress { height: 5px; margin: 16px 0 -5px; overflow: hidden; border-radius: 9px; background: #c7ccce; }
 .upload-progress span { display: block; height: 100%; border-radius: inherit; background: var(--teal); transition: width .2s; }
+.upload-status { margin-top: 8px; color: #697176; font-size: .68rem; }
 .upload-alert { margin-top: 15px; padding: 11px 14px; border: 1px solid #ead09c; border-radius: 12px; background: #fff2d8; color: #865d0a; font-size: .73rem; }
 
 .overview-row { display: grid; grid-template-columns: 1.22fr 1fr .92fr; gap: 18px; margin: 34px 0 32px; }

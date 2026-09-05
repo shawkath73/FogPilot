@@ -28,7 +28,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="FogPilot Dashboard", version="0.2.0", lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=[item.strip() for item in settings.allowed_origins.split(",")], allow_credentials=True, allow_methods=["GET", "POST"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=[item.strip() for item in settings.allowed_origins.split(",")], allow_credentials=True, allow_methods=["GET", "POST", "DELETE", "OPTIONS"], allow_headers=["*"])
 orchestrator = FogPilotOrchestrator(config=settings)
 database = Database()
 try:
@@ -111,6 +111,26 @@ async def _demo_stream() -> None:
             capture.release()
 
 
+async def _stop_stream() -> None:
+    global _running, _stream_task, _video_path, _media_kind
+    _running = False
+    task = _stream_task
+    _stream_task = None
+    if task and task is not asyncio.current_task():
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+    if _video_path:
+        try:
+            os.unlink(_video_path)
+        except FileNotFoundError:
+            pass
+    _video_path = None
+    _media_kind = None
+
+
 @app.get("/")
 def dashboard() -> JSONResponse:
     return JSONResponse({"service": "fogpilot-backend", "frontend": "deploy frontend separately"})
@@ -160,18 +180,7 @@ async def start() -> dict[str, str]:
 
 @app.post("/api/stop")
 async def stop() -> dict[str, str]:
-    global _running, _stream_task, _video_path, _media_kind
-    _running = False
-    if _stream_task:
-        _stream_task.cancel()
-        _stream_task = None
-    if _video_path:
-        try:
-            os.unlink(_video_path)
-        except FileNotFoundError:
-            pass
-        _video_path = None
-    _media_kind = None
+    await _stop_stream()
     event("stream_stopped")
     return {"status": "stopped"}
 
@@ -199,15 +208,7 @@ async def upload_media(file: UploadFile = File(...)) -> dict[str, str]:
     suffix = Path(file.filename or "").suffix.lower()
     if suffix not in video_extensions | image_extensions:
         raise HTTPException(status_code=415, detail="unsupported media type; use a video or image file")
-    if _stream_task:
-        _stream_task.cancel()
-        _stream_task = None
-    _running = False
-    if _video_path:
-        try:
-            os.unlink(_video_path)
-        except FileNotFoundError:
-            pass
+    await _stop_stream()
     with tempfile.NamedTemporaryFile(prefix="fogpilot-", suffix=suffix, delete=False) as target:
         total = 0
         while chunk := await file.read(1024 * 1024):
@@ -222,12 +223,9 @@ async def upload_media(file: UploadFile = File(...)) -> dict[str, str]:
     _video_path = target.name
     _media_kind = "image" if suffix in image_extensions else "video"
     if _media_kind == "image":
-        decoded = cv2.imread(_video_path, cv2.IMREAD_COLOR)
-        valid = decoded is not None
+        valid = await asyncio.to_thread(_valid_image, _video_path)
     else:
-        probe = cv2.VideoCapture(_video_path)
-        valid = bool(probe.isOpened())
-        probe.release()
+        valid = await asyncio.to_thread(_valid_video, _video_path)
     if not valid:
         os.unlink(_video_path)
         _video_path = None
@@ -238,6 +236,18 @@ async def upload_media(file: UploadFile = File(...)) -> dict[str, str]:
         _stream_task = asyncio.create_task(_demo_stream())
     event("media_uploaded", filename=file.filename, media_type=_media_kind, bytes=total)
     return {"status": "accepted", "media_type": _media_kind, "filename": file.filename or "media"}
+
+
+def _valid_image(path: str) -> bool:
+    return cv2.imread(path, cv2.IMREAD_COLOR) is not None
+
+
+def _valid_video(path: str) -> bool:
+    probe = cv2.VideoCapture(path)
+    try:
+        return bool(probe.isOpened())
+    finally:
+        probe.release()
 
 
 @app.delete("/api/media")

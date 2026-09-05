@@ -28,7 +28,7 @@ export default function MetricsCharts({ history, usage }) {
 
   return (
     <>
-      <div className="chart-card">
+      <div className="chart-card chart-card-wide">
         <div className="chart-card-header">FPS over time</div>
         <div className="chart-card-body">
           <ResponsiveContainer width="100%" height="100%">
@@ -44,7 +44,7 @@ export default function MetricsCharts({ history, usage }) {
         </div>
       </div>
 
-      <div className="chart-card">
+      <div className="chart-card chart-card-wide">
         <div className="chart-card-header">Quality metrics</div>
         <div className="chart-card-body">
           <ResponsiveContainer width="100%" height="100%">
@@ -61,7 +61,7 @@ export default function MetricsCharts({ history, usage }) {
         </div>
       </div>
 
-      <div className="chart-card">
+      <div className="chart-card usage-card">
         <div className="chart-card-header">Algorithm usage</div>
         <div className="chart-card-body">
           <ResponsiveContainer width="100%" height="100%">
@@ -76,7 +76,7 @@ export default function MetricsCharts({ history, usage }) {
         </div>
       </div>
 
-        <div className="chart-card">
+        <div className="chart-card routing-card">
           <div className="chart-card-header">Routing map</div>
           <div className="chart-card-body">
             <ResponsiveContainer width="100%" height="100%">

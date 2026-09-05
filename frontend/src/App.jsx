@@ -12,6 +12,7 @@ const initial = { connected: false, frame: null, history: [], usage: { DCP: 0, C
 function reducer(state, action) {
   if (action.type === 'connected') return { ...state, connected: action.value };
   if (action.type === 'summary') return { ...state, summary: { ...state.summary, ...action.value } };
+  if (action.type === 'media_removed') return { ...state, frame: null, history: [], usage: { DCP: 0, CAP: 0, CLAHE: 0, Retinex: 0 }, escalations: [] };
   if (action.type === 'frame') {
     const frame = action.value;
     const history = [...state.history, { frame_id: frame.frame_id, fps: frame.fps || 0, fade_improvement: frame.fade_improvement || 0, contrast_gain: frame.contrast_gain || 0 }].slice(-100);
@@ -87,7 +88,17 @@ export default function App() {
     uploadRequest.current?.abort();
     setUpload(current => ({ ...current, busy: false, error: 'Upload cancelled.' }));
   };
-  const removeMedia = async () => { await fetch(apiUrl('/api/media'), { method: 'DELETE' }); setUpload({ busy: false, progress: 0, error: '', warning: '' }); };
+  const removeMedia = async () => {
+    try {
+      const response = await fetch(apiUrl('/api/media'), { method: 'DELETE' });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.detail || 'Could not remove media');
+      dispatch({ type: 'media_removed' });
+      setUpload({ busy: false, progress: 0, error: '', warning: '' });
+    } catch (error) {
+      setUpload(current => ({ ...current, error: error.message, warning: '' }));
+    }
+  };
   const downloadReport = async () => {
     const response = await fetch(apiUrl('/api/report'));
     const blob = new Blob([JSON.stringify(await response.json(), null, 2)], { type: 'application/json' });

@@ -171,9 +171,7 @@ async def stop() -> dict[str, str]:
         except FileNotFoundError:
             pass
         _video_path = None
-        _media_kind = None
-        _video_path = None
-        _media_kind = None
+    _media_kind = None
     event("stream_stopped")
     return {"status": "stopped"}
 

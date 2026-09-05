@@ -24,6 +24,7 @@ from ..orchestrator import FogPilotOrchestrator
 async def lifespan(_app: FastAPI):
     yield
     await stop()
+    database.close()
 
 
 app = FastAPI(title="FogPilot Dashboard", version="0.2.0", lifespan=lifespan)
@@ -50,6 +51,7 @@ class ConfigUpdate(BaseModel):
 
 
 def _image_data(frame: np.ndarray) -> str:
+    frame = cv2.resize(frame, (480, 270), interpolation=cv2.INTER_AREA)
     success, encoded = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 75])
     if not success:
         return ""
@@ -170,6 +172,8 @@ async def stop() -> dict[str, str]:
             pass
         _video_path = None
         _media_kind = None
+        _video_path = None
+        _media_kind = None
     event("stream_stopped")
     return {"status": "stopped"}
 
@@ -197,20 +201,30 @@ async def upload_media(file: UploadFile = File(...)) -> dict[str, str]:
     suffix = Path(file.filename or "").suffix.lower()
     if suffix not in video_extensions | image_extensions:
         raise HTTPException(status_code=415, detail="unsupported media type; use a video or image file")
-    data = await file.read(settings.max_upload_bytes + 1)
-    if len(data) > settings.max_upload_bytes:
-        raise HTTPException(status_code=413, detail="media exceeds configured size limit")
+    if _stream_task:
+        _stream_task.cancel()
+        _stream_task = None
+    _running = False
     if _video_path:
         try:
             os.unlink(_video_path)
         except FileNotFoundError:
             pass
     with tempfile.NamedTemporaryFile(prefix="fogpilot-", suffix=suffix, delete=False) as target:
-        target.write(data)
-        _video_path = target.name
+        total = 0
+        while chunk := await file.read(1024 * 1024):
+            total += len(chunk)
+            if total > settings.max_upload_bytes:
+                target.close()
+                os.unlink(target.name)
+                await file.close()
+                raise HTTPException(status_code=413, detail=f"file is too large; maximum is {settings.max_upload_bytes // (1024 * 1024)} MB")
+            target.write(chunk)
+    await file.close()
+    _video_path = target.name
     _media_kind = "image" if suffix in image_extensions else "video"
     if _media_kind == "image":
-        decoded = cv2.imdecode(np.frombuffer(data, dtype=np.uint8), cv2.IMREAD_COLOR)
+        decoded = cv2.imread(_video_path, cv2.IMREAD_COLOR)
         valid = decoded is not None
     else:
         probe = cv2.VideoCapture(_video_path)
@@ -224,8 +238,14 @@ async def upload_media(file: UploadFile = File(...)) -> dict[str, str]:
     if not _running:
         _running = True
         _stream_task = asyncio.create_task(_demo_stream())
-    event("media_uploaded", filename=file.filename, media_type=_media_kind, bytes=len(data))
+    event("media_uploaded", filename=file.filename, media_type=_media_kind, bytes=total)
     return {"status": "accepted", "media_type": _media_kind, "filename": file.filename or "media"}
+
+
+@app.delete("/api/media")
+async def remove_media() -> dict[str, str]:
+    await stop()
+    return {"status": "removed"}
 
 
 @app.get("/api/status")

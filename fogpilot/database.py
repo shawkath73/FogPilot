@@ -10,6 +10,7 @@ class Database:
     def __init__(self, url: str | None = None) -> None:
         self.url = url or os.getenv("DATABASE_URL", "sqlite:///./fogpilot.db")
         self.sqlite_path = Path(self.url.removeprefix("sqlite:///"))
+        self._mongo_client: Any = None
 
     def _postgres(self) -> Any:
         import psycopg
@@ -17,7 +18,9 @@ class Database:
 
     def _mongo(self) -> Any:
         from pymongo import MongoClient
-        return MongoClient(self.url)
+        if self._mongo_client is None:
+            self._mongo_client = MongoClient(self.url, serverSelectionTimeoutMS=5000)
+        return self._mongo_client
 
     def initialize(self) -> None:
         statement = """CREATE TABLE IF NOT EXISTS frame_metrics (
@@ -30,7 +33,6 @@ class Database:
             client = self._mongo()
             database_name = os.getenv("MONGODB_DATABASE", "fogpilot")
             client[database_name]["frame_metrics"].create_index("frame_id")
-            client.close()
         elif self.url.startswith(("postgres://", "postgresql://")):
             with self._postgres() as connection:
                 connection.execute(statement)
@@ -52,10 +54,14 @@ class Database:
                 "contrast_gain": metrics["contrast_gain"],
                 "degraded_output": degraded,
             })
-            client.close()
         elif self.url.startswith(("postgres://", "postgresql://")):
             with self._postgres() as connection:
                 connection.execute("INSERT INTO frame_metrics (frame_id, algorithm, processing_time_ms, fade_improvement, contrast_gain, degraded_output) VALUES (%s, %s, %s, %s, %s, %s)", values)
         else:
             with sqlite3.connect(self.sqlite_path) as connection:
                 connection.execute("INSERT INTO frame_metrics (frame_id, algorithm, processing_time_ms, fade_improvement, contrast_gain, degraded_output) VALUES (?, ?, ?, ?, ?, ?)", values)
+
+    def close(self) -> None:
+        if self._mongo_client is not None:
+            self._mongo_client.close()
+            self._mongo_client = None

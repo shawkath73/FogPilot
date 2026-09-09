@@ -38,6 +38,8 @@ export default function App() {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [upload, setUpload] = useState({ busy: false, progress: 0, phase: '', error: '', warning: '' });
   const [mediaUrl, setMediaUrl] = useState('');
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
+  const [dropActive, setDropActive] = useState(false);
   const uploadRequest = useRef(null);
 
   useEffect(() => {
@@ -105,6 +107,7 @@ export default function App() {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+    setMediaPickerOpen(false);
     if (file.size > MAX_UPLOAD_BYTES) {
       setUpload({ busy: false, progress: 0, phase: '', error: '', warning: `${file.name} is too large. Maximum upload size is 100 MB.` });
       return;
@@ -120,6 +123,12 @@ export default function App() {
         request.timeout = 15 * 60 * 1000;
         request.upload.onprogress = event => {
           if (event.lengthComputable) setUpload(current => ({ ...current, phase: `Uploading ${Math.round(event.loaded / event.total * 100)}%`, progress: Math.round(event.loaded / event.total * 100) }));
+        };
+        const handleDrop = event => {
+          event.preventDefault();
+          setDropActive(false);
+          const file = event.dataTransfer.files?.[0];
+          if (file) chooseFile({ target: { files: [file], value: '' } });
         };
         request.onload = () => {
           let result = {};
@@ -146,6 +155,7 @@ export default function App() {
     if (!url) return;
     dispatch({ type: 'media_removed' });
     setUpload({ busy: true, progress: 0, phase: 'Loading remote media…', error: '', warning: '' });
+    setMediaPickerOpen(false);
     try {
       const response = await fetch(apiUrl('/api/media-url'), {
         method: 'POST',
@@ -210,8 +220,7 @@ export default function App() {
       <button className="side-link" onClick={() => control('stop')}><i className="ui-icon stop-icon" aria-hidden="true" /><span>Stop session</span></button>
     </aside>
     <main className="dashboard">
-      <header className="dashboard-header"><div><span className="eyebrow">Live monitoring</span><h1>Hi, FogPilot <span className="brand-spark" aria-hidden="true" /></h1><p>Adaptive dehazing, monitored in real time.</p></div><div className="header-actions"><span className={`connection ${state.connected ? 'online' : ''}`}><i />{state.connected ? 'Connected' : 'Reconnecting'}</span><button className="report-button" onClick={downloadReport}><i className="ui-icon download-icon" aria-hidden="true" />Report</button><button className="reset-statistics top-reset" onClick={resetStatistics}>Reset statistics</button><button className="primary-button" onClick={() => control('start')}><i className="ui-icon play-icon" aria-hidden="true" />Start</button><label className={`upload-button${upload.busy ? ' disabled' : ''}`}><i className="ui-icon upload-icon" aria-hidden="true" />{upload.busy ? `Uploading ${upload.progress}%` : 'Upload'}<input type="file" accept="image/*,video/*" onChange={chooseFile} disabled={upload.busy} /></label>{upload.busy && <button className="cancel-button" onClick={cancelUpload}>Cancel</button>}</div></header>
-      <form className="media-url-form" onSubmit={loadMediaUrl}><input type="url" value={mediaUrl} onChange={event => setMediaUrl(event.target.value)} placeholder="Paste an image or video URL" aria-label="Remote image or video URL" disabled={upload.busy} /><button className="report-button" type="submit" disabled={upload.busy || !mediaUrl.trim()}>Load link</button></form>
+      <header className="dashboard-header"><div><span className="eyebrow">Live monitoring</span><h1>Hi, FogPilot <span className="brand-spark" aria-hidden="true" /></h1><p>Adaptive dehazing, monitored in real time.</p></div><div className="header-actions"><span className={`connection ${state.connected ? 'online' : ''}`}><i />{state.connected ? 'Connected' : 'Reconnecting'}</span><button className="report-button" onClick={downloadReport}><i className="ui-icon download-icon" aria-hidden="true" />Report</button><button className="reset-statistics top-reset" onClick={resetStatistics}>Reset statistics</button><button className="primary-button" onClick={() => control('start')}><i className="ui-icon play-icon" aria-hidden="true" />Start</button><button className={`upload-button${upload.busy ? ' disabled' : ''}`} onClick={() => setMediaPickerOpen(true)} disabled={upload.busy}><i className="ui-icon upload-icon" aria-hidden="true" />{upload.busy ? `Loading ${upload.progress}%` : 'Upload'}</button>{upload.busy && <button className="cancel-button" onClick={cancelUpload}>Cancel</button>}</div></header>
       {(upload.warning || upload.error) && <div className="upload-alert">{upload.warning || upload.error}</div>}
       {upload.busy && <div className="upload-progress"><span style={{ width: `${upload.progress}%` }} /></div>}
       {upload.busy && <div className="upload-status">{upload.phase || 'Preparing media…'}</div>}
@@ -220,6 +229,26 @@ export default function App() {
       <section className="metrics-workspace"><div className="section-heading"><h2>Live analytics</h2><div><span>Last 100 points</span><button className="text-button" onClick={downloadReport}>Download report <i className="ui-icon download-icon" aria-hidden="true" /></button></div></div><MetricsCharts history={state.history} usage={state.usage} /></section>
       <section className="bottom-grid"><EscalationLog items={state.escalations} /><ConfigPanel /></section>
     </main>
+    {mediaPickerOpen && <div className="picker-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setMediaPickerOpen(false); }}>
+      <section className="media-picker" role="dialog" aria-modal="true" aria-labelledby="picker-title">
+        <button className="guide-close" onClick={() => setMediaPickerOpen(false)} aria-label="Close media picker" />
+        <span className="eyebrow">Media input</span>
+        <h2 id="picker-title">Load image or video</h2>
+        <p className="picker-intro">Choose a local file, drag it here, or paste a direct media link. Both images and videos can be processed.</p>
+        <label className={`drop-zone${dropActive ? ' active' : ''}`} onDragOver={event => { event.preventDefault(); setDropActive(true); }} onDragLeave={() => setDropActive(false)} onDrop={handleDrop}>
+          <i className="ui-icon upload-icon" aria-hidden="true" />
+          <strong>Drop media here</strong>
+          <span>or click to browse your device</span>
+          <input type="file" accept="image/*,video/*" onChange={chooseFile} />
+        </label>
+        <div className="picker-divider"><span>or use a direct link</span></div>
+        <form className="media-url-form picker-url-form" onSubmit={loadMediaUrl}>
+          <input type="url" value={mediaUrl} onChange={event => setMediaUrl(event.target.value)} placeholder="https://example.com/media.mp4" aria-label="Remote image or video URL" />
+          <button className="report-button" type="submit" disabled={!mediaUrl.trim()}>Load link</button>
+        </form>
+        <div className="picker-note"><i className="ui-icon info-icon" aria-hidden="true" /><span><b>Supported formats:</b> JPG, JPEG, PNG, BMP, WebP, MP4, MOV, AVI, MKV, WebM, and M3U8. Local files are limited to 100 MB; direct links avoid backend file storage.</span></div>
+      </section>
+    </div>}
     {guideOpen && <div className="guide-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setGuideOpen(false); }}>
       <section className="guide-modal" role="dialog" aria-modal="true" aria-labelledby="guide-title">
         <button className="guide-close" onClick={() => setGuideOpen(false)} aria-label="Close user guide" />
@@ -227,7 +256,7 @@ export default function App() {
         <h2 id="guide-title">How the dashboard works</h2>
         <p className="guide-intro">FogPilot watches each frame, chooses the most suitable dehazing method, checks the result, and reports the decision live.</p>
         <div className="guide-sections">
-          <article><h3>1. Start a session</h3><p>Click <b>Start</b> to run the built-in fog-road demo, use <b>Upload</b> for a local file, or paste a direct image/video link into the remote media field. Remote images are held in memory and remote videos are opened from their URL, so large media does not need to be stored in the backend.</p></article>
+          <article><h3>1. Load media</h3><p>Click <b>Upload</b> to open the media picker. Browse for an image or video, drag a file into the drop zone, or paste a direct link. Supported formats are JPG, JPEG, PNG, BMP, WebP, MP4, MOV, AVI, MKV, WebM, and M3U8. Local files are limited to 100 MB; direct links avoid backend file storage.</p></article>
           <article><h3>2. Follow the agents</h3><p><b>Sensor</b> measures fog, brightness, complexity, and FPS headroom. <b>Planner</b> routes the frame to DCP, CAP, CLAHE, or Retinex. <b>Critic</b> checks quality and speed, then escalates when needed. <b>Logger</b> stores bounded history and session totals.</p></article>
           <article><h3>3. Read the metrics</h3><p><b>Frames processed</b> is the total number of frames accepted by the pipeline. <b>Mean FPS</b> is measured processing speed. <b>30 FPS compliance</b> is the percentage of measured frames meeting the real-time target. <b>Escalations</b> counts frames that needed another algorithm.</p></article>
           <article><h3>4. Understand the charts</h3><p><b>FPS over time</b> shows speed against the dashed 30 FPS target. <b>Quality metrics</b> shows FADE improvement and contrast gain. <b>Algorithm usage</b> shows routing distribution. <b>Routing map</b> shows the frame count handled by each algorithm.</p></article>

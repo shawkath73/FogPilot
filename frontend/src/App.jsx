@@ -35,8 +35,28 @@ export default function App() {
   const [state, dispatch] = useReducer(reducer, initial);
   const [backendActive, setBackendActive] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('dashboard');
   const [upload, setUpload] = useState({ busy: false, progress: 0, phase: '', error: '', warning: '' });
   const uploadRequest = useRef(null);
+
+  useEffect(() => {
+    const sections = [
+      ['dashboard', document.querySelector('.overview-row')],
+      ['stream', document.querySelector('.video-workspace')],
+      ['analytics', document.querySelector('.metrics-workspace')],
+    ].filter(([, section]) => section);
+    const observer = new IntersectionObserver(entries => {
+      const visible = entries
+        .filter(entry => entry.isIntersecting)
+        .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+      if (visible[0]) setActiveSection(visible[0].target.dataset.navSection);
+    }, { rootMargin: '-16% 0px -68% 0px', threshold: 0 });
+    sections.forEach(([name, section]) => {
+      section.dataset.navSection = name;
+      observer.observe(section);
+    });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     let stopped = false;
@@ -159,10 +179,10 @@ export default function App() {
     <aside className="sidebar">
       <div className="brand"><div className="brand-mark">FP</div><b>FogPilot</b></div>
       <span className="sidebar-caption">Monitoring</span>
-      <button className="side-link selected"><i className="ui-icon grid-icon" aria-hidden="true" /><span>Dashboard</span></button>
-      <button className="side-link" onClick={() => document.querySelector('.video-workspace')?.scrollIntoView({ behavior: 'smooth' })}><i className="ui-icon stream-icon" aria-hidden="true" /><span>Live stream</span></button>
-      <button className="side-link" onClick={() => document.querySelector('.metrics-workspace')?.scrollIntoView({ behavior: 'smooth' })}><i className="ui-icon chart-icon" aria-hidden="true" /><span>Analytics</span></button>
-      <button className="side-link" onClick={() => setGuideOpen(true)}><i className="ui-icon info-icon" aria-hidden="true" /><span>User guide</span></button>
+      <button className={`side-link${!guideOpen && activeSection === 'dashboard' ? ' selected' : ''}`} onClick={() => document.querySelector('.overview-row')?.scrollIntoView({ behavior: 'smooth' })}><i className="ui-icon grid-icon" aria-hidden="true" /><span>Dashboard</span></button>
+      <button className={`side-link${!guideOpen && activeSection === 'stream' ? ' selected' : ''}`} onClick={() => document.querySelector('.video-workspace')?.scrollIntoView({ behavior: 'smooth' })}><i className="ui-icon stream-icon" aria-hidden="true" /><span>Live stream</span></button>
+      <button className={`side-link${!guideOpen && activeSection === 'analytics' ? ' selected' : ''}`} onClick={() => document.querySelector('.metrics-workspace')?.scrollIntoView({ behavior: 'smooth' })}><i className="ui-icon chart-icon" aria-hidden="true" /><span>Analytics</span></button>
+      <button className={`side-link${guideOpen ? ' selected' : ''}`} onClick={() => setGuideOpen(true)}><i className="ui-icon info-icon" aria-hidden="true" /><span>User guide</span></button>
       <span className="sidebar-caption">System</span>
       {['Sensor', 'Planner', 'Critic', 'Logger'].map(agent => <div className="agent-row" key={agent}><i />{agent}<small>{state.connected ? 'live' : 'idle'}</small></div>)}
       <div className="sidebar-fill" />

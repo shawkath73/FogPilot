@@ -122,7 +122,9 @@ async def _demo_stream() -> None:
                 database.record(metrics.to_dict(), result.verdict.degraded_output)
             except Exception as exc:
                 event("database_record_error", error=str(exc), frame_id=_frame_id)
+            session_summary = orchestrator.logger.summary()
             await _broadcast(payload)
+            await _broadcast({"type": "summary", **session_summary})
             await asyncio.sleep(1 / 10)
     finally:
         if capture:

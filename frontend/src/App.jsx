@@ -18,7 +18,7 @@ function reducer(state, action) {
     const history = [...state.history, { frame_id: frame.frame_id, fps: frame.fps || 0, fade_improvement: frame.fade_improvement || 0, contrast_gain: frame.contrast_gain || 0 }].slice(-100);
     const usage = { ...state.usage }; usage[frame.algorithm] = (usage[frame.algorithm] || 0) + 1;
     const escalations = frame.escalation ? [{ frame_id: frame.frame_id, reason: frame.escalation.reason, algorithm: frame.algorithm }, ...state.escalations].slice(0, 20) : state.escalations;
-    return { ...state, frame, history, usage, escalations };
+    return { ...state, frame, history, usage, escalations, summary: frame.session_summary ? { ...state.summary, ...frame.session_summary } : state.summary };
   }
   return state;
 }

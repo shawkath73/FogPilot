@@ -124,6 +124,8 @@ button { cursor: pointer; }
 .outline-button { width: 100%; padding: 9px; border: 1px solid #c8cccd; border-radius: 20px; background: transparent; color: #333638; font-size: .67rem; font-weight: 600; }
 
 .video-workspace, .metrics-workspace, .bottom-grid { margin-bottom: 32px; }
+.dashboard-footer { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 18px 0 4px; border-top: 1px solid rgba(31,38,43,.1); color: #8b9296; font-size: .67rem; }
+.copyright-icon { display: inline-grid; place-items: center; width: 16px; height: 16px; border: 1px solid currentColor; border-radius: 50%; font-size: .62rem; line-height: 1; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .section-heading h2 { margin: 0; color: #292c2f; font-size: 1rem; }
 .section-heading > div { display: flex; align-items: center; gap: 13px; }
@@ -219,4 +221,5 @@ button { cursor: pointer; }
   .video-grid, .algorithm-output-grid, .metrics-workspace .charts, .bottom-grid { gap: 14px; }
   .section-heading > div { align-items: flex-start; flex-direction: column; gap: 8px; }
   .section-heading > div .text-button { align-self: flex-start; }
+  .dashboard-footer { padding-bottom: 0; text-align: center; }
 }

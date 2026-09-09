@@ -232,6 +232,7 @@ export default function App() {
       <section className="video-workspace"><div className="section-heading"><h2>Media workspace</h2><div><button className="text-button" onClick={removeMedia}>Remove media</button><span>{state.frame ? `Frame ${state.frame.frame_id}` : upload.busy ? 'Preparing media…' : 'No media loaded'}</span></div></div><VideoPanels frame={state.frame} /></section>
       <section className="metrics-workspace"><div className="section-heading"><h2>Live analytics</h2><div><span>Last 100 points</span></div></div><MetricsCharts history={state.history} usage={state.usage} /></section>
       <section className="bottom-grid"><EscalationLog items={state.escalations} /><ConfigPanel /></section>
+      <footer className="dashboard-footer"><span className="copyright-icon" aria-hidden="true">©</span><span>2026 Muhammed Shawkath V I. All rights reserved.</span></footer>
     </main>
     {mediaPickerOpen && <div className="picker-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setMediaPickerOpen(false); }}>
       <section className="media-picker" role="dialog" aria-modal="true" aria-labelledby="picker-title">

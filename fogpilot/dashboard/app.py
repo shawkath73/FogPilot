@@ -78,6 +78,7 @@ async def _demo_stream() -> None:
     global _frame_id, _video_path, _media_kind, _latest_payload
     capture = cv2.VideoCapture(_video_path) if _video_path else None
     still = cv2.imread(_video_path) if _video_path and _media_kind == "image" else None
+    preview_cache: dict[str, str] = {}
     if _media_kind == "video" and (capture is None or not capture.isOpened()):
         event("media_read_error", media_type="video", reason="video capture could not be opened")
         await _broadcast({"type": "media_error", "message": "The MP4 could not be decoded by the backend."})
@@ -105,15 +106,29 @@ async def _demo_stream() -> None:
                 raw = np.zeros((360, 640, 3), dtype=np.uint8)
                 cv2.rectangle(raw, (100, 80), (540, 290), (45, 125, 220), -1)
                 fog = cv2.addWeighted(raw, 0.5, np.full_like(raw, 205), 0.5, 0)
-            result = orchestrator.process_frame(fog, _frame_id, 30.0)
+            result = await asyncio.to_thread(orchestrator.process_frame, fog, _frame_id, 30.0)
             metrics = result.metrics
-            algorithm_images: dict[str, str] = {}
-            for algorithm, worker in orchestrator.workers.items():
-                try:
-                    candidate = result.frame if algorithm == result.decision.selected_algorithm else worker.process(fog)
-                    algorithm_images[algorithm] = _image_data(candidate, (220, 124), 48)
-                except Exception as exc:
-                    event("algorithm_preview_error", frame_id=_frame_id, algorithm=algorithm, error=str(exc))
+            algorithm_images = dict(preview_cache)
+            active_algorithm = result.decision.selected_algorithm
+            algorithm_images[active_algorithm] = _image_data(result.frame, (220, 124), 48)
+            if _frame_id % 10 == 0:
+                async def build_preview(algorithm: str, worker: Any) -> tuple[str, str | None]:
+                    try:
+                        candidate = await asyncio.to_thread(worker.process, fog)
+                        return algorithm, _image_data(candidate, (220, 124), 48)
+                    except Exception as exc:
+                        event("algorithm_preview_error", frame_id=_frame_id, algorithm=algorithm, error=str(exc))
+                        return algorithm, None
+
+                previews = await asyncio.gather(*[
+                    build_preview(algorithm, worker)
+                    for algorithm, worker in orchestrator.workers.items()
+                    if algorithm != active_algorithm
+                ])
+                for algorithm, image in previews:
+                    if image:
+                        algorithm_images[algorithm] = image
+                preview_cache = algorithm_images
             payload = {
                 "frame_id": _frame_id, "algorithm": result.decision.selected_algorithm,
                 "reason": result.decision.reason, "fps": round(1000 / max(metrics.processing_time_ms, 0.01), 2),

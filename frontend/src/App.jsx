@@ -250,7 +250,7 @@ export default function App() {
           <input type="url" value={mediaUrl} onChange={event => setMediaUrl(event.target.value)} placeholder="https://example.com/media.mp4" aria-label="Remote image or video URL" />
           <button className="report-button" type="submit" disabled={!mediaUrl.trim()}>Load link</button>
         </form>
-        <div className="picker-note"><i className="ui-icon info-icon" aria-hidden="true" /><span><b>Supported formats:</b> JPG, JPEG, PNG, BMP, WebP, MP4, MOV, AVI, MKV, WebM, and M3U8. Local files are limited to 100 MB; direct links avoid backend file storage.</span></div>
+        <div className="picker-note"><i className="ui-icon info-icon" aria-hidden="true" /><span><b>Supported formats:</b> JPG, JPEG, PNG, BMP, WebP, MP4, MOV, AVI, MKV, WebM, and M3U8. Local files are limited to 100 MB.</span></div>
       </section>
     </div>}
     {guideOpen && <div className="guide-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setGuideOpen(false); }}>
@@ -260,7 +260,7 @@ export default function App() {
         <h2 id="guide-title">How the dashboard works</h2>
         <p className="guide-intro">FogPilot watches each frame, chooses the most suitable dehazing method, checks the result, and reports the decision live.</p>
         <div className="guide-sections">
-          <article><h3>1. Load media</h3><p>Click <b>Upload</b> to open the media picker. Browse for an image or video, drag a file into the drop zone, or paste a direct link. Supported formats are JPG, JPEG, PNG, BMP, WebP, MP4, MOV, AVI, MKV, WebM, and M3U8. Local files are limited to 100 MB; direct links avoid backend file storage.</p></article>
+          <article><h3>1. Load media</h3><p>Click <b>Upload</b> to open the media picker. Browse for an image or video, drag a file into the drop zone, or paste a direct link. Supported formats are JPG, JPEG, PNG, BMP, WebP, MP4, MOV, AVI, MKV, WebM, and M3U8. Local files are limited to 100 MB.</p></article>
           <article><h3>2. Follow the agents</h3><p><b>Sensor</b> measures fog, brightness, complexity, and FPS headroom. <b>Planner</b> routes the frame to DCP, CAP, CLAHE, or Retinex. <b>Critic</b> checks quality and speed, then escalates when needed. <b>Logger</b> stores bounded history and session totals.</p></article>
           <article><h3>3. Read the metrics</h3><p><b>Frames processed</b> is the total number of frames accepted by the pipeline. <b>Mean FPS</b> is measured processing speed. <b>30 FPS compliance</b> is the percentage of measured frames meeting the real-time target. <b>Escalations</b> counts frames that needed another algorithm.</p></article>
           <article><h3>4. Understand the charts</h3><p><b>FPS over time</b> shows speed against the dashed 30 FPS target. <b>Quality metrics</b> shows FADE improvement and contrast gain. <b>Algorithm usage</b> shows routing distribution. <b>Routing map</b> shows the frame count handled by each algorithm.</p></article>

@@ -171,7 +171,49 @@ button { cursor: pointer; }
 .guide-modal h2 { margin: 8px 0 8px; font-size: clamp(1.55rem, 3vw, 2rem); letter-spacing: -.04em; }.guide-intro { max-width: 650px; margin: 0 0 24px; color: #777e82; font-size: .82rem; line-height: 1.6; }
 .guide-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }.guide-sections article { padding: 16px; border: 1px solid #e0e3e3; border-radius: 15px; background: #f3f5f4; }.guide-sections h3 { margin: 0 0 7px; color: #303538; font-size: .78rem; }.guide-sections p { margin: 0; color: #747b7f; font-size: .7rem; line-height: 1.55; }.guide-legend { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 20px; color: #737a7e; font-size: .67rem; }.guide-dot { display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: var(--teal); }.guide-dot.warn { background: #d95b63; }
 
-@media (max-width: 1050px) { .overview-row { grid-template-columns: 1fr 1fr; }.usage-summary { grid-column: span 2; }.bottom-grid { grid-template-columns: 1fr 1fr; }.sidebar { flex-basis: 190px; width: 190px; }.dashboard { padding-left: 4px; padding-right: 4px; } }
-@media (max-width: 1000px) { .algorithm-output-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 1000px) { .metrics-workspace .charts { gap: 24px; } }
-@media (max-width: 760px) { .app-shell { display: block; padding: 10px; }.sidebar { position: static; width: 100%; height: auto; min-height: 0; margin-bottom: 18px; }.sidebar-fill, .agent-row, .sidebar-caption, .side-link:not(.selected) { display: none; }.dashboard { padding: 16px 4px 35px; }.dashboard-header, .header-actions { align-items: flex-start; flex-direction: column; }.header-actions { width: 100%; }.media-url-form { max-width: none; }.media-url-form input { width: 100%; }.picker-backdrop { padding: 12px; }.media-picker { padding: 26px 20px; }.overview-row, .video-grid, .metrics-workspace .charts, .bottom-grid, .algorithm-output-grid, .guide-sections { grid-template-columns: 1fr; gap: 18px; }.reset-statistics { grid-column: auto; }.usage-summary { grid-column: auto; }.section-heading { align-items: flex-start; flex-direction: column; }.section-heading > div { width: 100%; justify-content: space-between; }.guide-backdrop { padding: 12px; }.guide-modal { padding: 26px 20px; } }
+@media (max-width: 1150px) { .overview-row { grid-template-columns: 1fr 1fr; }.usage-summary { grid-column: span 2; }.bottom-grid { grid-template-columns: 1fr 1fr; }.sidebar { flex-basis: 195px; width: 195px; }.dashboard { padding-left: 4px; padding-right: 4px; } }
+@media (max-width: 1000px) { .algorithm-output-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }.metrics-workspace .charts { gap: 24px; }.header-actions { max-width: 520px; }.chart-card { min-height: 290px; }.chart-card-body { height: 225px; }.usage-card .chart-card-body, .routing-card .chart-card-body { height: 270px; } }
+@media (max-width: 760px) {
+  .app-shell { display: block; padding: 10px; }
+  .sidebar { position: static; width: 100%; height: auto; min-height: 0; margin-bottom: 18px; padding: 18px 12px 12px; }
+  .brand { padding: 0 10px 18px; }
+  .sidebar-caption, .agent-row, .sidebar-fill { display: none; }
+  .sidebar > .side-link { display: inline-flex; width: auto; margin: 2px; padding: 9px 10px; }
+  .sidebar > .side-link:last-child { display: none; }
+  .dashboard { padding: 12px 2px 35px; }
+  .dashboard-header { align-items: stretch; flex-direction: column; gap: 14px; }
+  .dashboard-header h1 { font-size: clamp(1.8rem, 9vw, 2.35rem); }
+  .header-actions { width: 100%; max-width: none; align-items: stretch; justify-content: flex-start; gap: 8px; }
+  .connection { margin: 0 0 3px; }
+  .primary-button, .upload-button, .report-button, .cancel-button, .top-reset { flex: 1 1 calc(50% - 8px); }
+  .media-url-form { max-width: none; }
+  .media-url-form input { width: 100%; }
+  .overview-row, .video-grid, .metrics-workspace .charts, .bottom-grid, .algorithm-output-grid, .guide-sections { grid-template-columns: 1fr; gap: 18px; }
+  .overview-values { gap: 24px; }
+  .overview-values b { font-size: 1.8rem; }
+  .section-heading { align-items: flex-start; flex-direction: column; }
+  .section-heading > div { width: 100%; justify-content: space-between; }
+  .section-heading > div span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .video-card-header, .card-header, .chart-card-header { padding: 13px 14px; }
+  .chart-card, .chart-card.usage-card, .chart-card.routing-card { min-height: 285px; }
+  .chart-card-body, .usage-card .chart-card-body, .routing-card .chart-card-body { height: 235px; padding-left: 4px; padding-right: 4px; }
+  .picker-backdrop, .guide-backdrop { padding: 10px; }
+  .media-picker, .guide-modal { max-height: calc(100vh - 20px); padding: 25px 18px; }
+  .picker-url-form { flex-direction: column; }
+  .picker-url-form button { width: 100%; }
+}
+@media (max-width: 420px) {
+  .app-shell { padding: 6px; }
+  .sidebar { border-radius: 18px; }
+  .sidebar > .side-link { gap: 7px; font-size: .7rem; }
+  .sidebar > .side-link .ui-icon { flex-basis: 15px; width: 15px; height: 15px; }
+  .dashboard { padding-left: 0; padding-right: 0; }
+  .header-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .connection { grid-column: 1 / -1; }
+  .primary-button, .upload-button, .report-button, .cancel-button, .top-reset { width: 100%; }
+  .overview-main, .overview-light { padding: 18px; }
+  .overview-bottom { gap: 10px; flex-direction: column; }
+  .video-grid, .algorithm-output-grid, .metrics-workspace .charts, .bottom-grid { gap: 14px; }
+  .section-heading > div { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .section-heading > div .text-button { align-self: flex-start; }
+}

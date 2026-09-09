@@ -65,7 +65,7 @@ button { cursor: pointer; }
 .dashboard-header h1 { display: flex; align-items: center; gap: 10px; margin: 8px 0 5px; color: var(--ink); font-size: clamp(1.7rem, 2.55vw, 2.35rem); letter-spacing: -.06em; white-space: nowrap; }
 .dashboard-header h1 em { color: var(--teal); font-style: normal; }
 .dashboard-header p { margin: 0; color: #858b90; font-size: .78rem; }
-.header-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 9px; margin-top: 8px; }
+.header-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 9px; margin-top: 49px; }
 .connection { display: inline-flex; align-items: center; gap: 7px; margin-right: 5px; color: #93989d; font-size: .69rem; }
 .connection i, .health i { width: 7px; height: 7px; border-radius: 50%; background: #f0a31a; }
 .connection.online i, .health i { background: var(--teal); box-shadow: 0 0 0 3px #16a89422; }
@@ -184,7 +184,7 @@ button { cursor: pointer; }
   .dashboard { padding: 12px 2px 35px; }
   .dashboard-header { align-items: stretch; flex-direction: column; gap: 14px; }
   .dashboard-header h1 { gap: 8px; font-size: clamp(1.35rem, 7.5vw, 2rem); letter-spacing: -.055em; }
-  .header-actions { width: 100%; max-width: none; align-items: stretch; justify-content: flex-start; gap: 8px; }
+  .header-actions { width: 100%; max-width: none; align-items: stretch; justify-content: flex-start; gap: 8px; margin-top: 0; }
   .connection { margin: 0 0 3px; }
   .primary-button, .upload-button, .report-button, .cancel-button, .top-reset { flex: 1 1 calc(50% - 8px); }
   .media-url-form { max-width: none; }

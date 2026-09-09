@@ -22,6 +22,12 @@ def test_config_update():
     assert response.status_code == 200
 
 
+def test_summary_includes_processed_frame_count():
+    response = TestClient(app).get("/api/summary")
+    assert response.status_code == 200
+    assert "frames_processed" in response.json()
+
+
 def test_image_upload_starts_stream():
     client = TestClient(app)
     response = client.post(

@@ -122,7 +122,7 @@ async def _demo_stream() -> None:
                 database.record(metrics.to_dict(), result.verdict.degraded_output)
             except Exception as exc:
                 event("database_record_error", error=str(exc), frame_id=_frame_id)
-            session_summary = orchestrator.logger.summary()
+            session_summary = orchestrator.logger.report()
             await _broadcast(payload)
             await _broadcast({"type": "summary", **session_summary})
             await asyncio.sleep(1 / 10)
@@ -164,7 +164,7 @@ def health() -> dict[str, str]:
 
 @app.get("/api/summary")
 def summary() -> dict:
-    return orchestrator.logger.summary()
+    return orchestrator.logger.report()
 
 
 @app.get("/api/report")
@@ -289,7 +289,7 @@ async def websocket_stream(websocket: WebSocket) -> None:
     await websocket.accept()
     _clients.add(websocket)
     try:
-        await websocket.send_json({"type": "summary", **orchestrator.logger.summary()})
+        await websocket.send_json({"type": "summary", **orchestrator.logger.report()})
         while True:
             await websocket.receive_text()
     except WebSocketDisconnect:

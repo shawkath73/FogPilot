@@ -42,6 +42,7 @@ _running = False
 _frame_id = 0
 _video_path: str | None = None
 _media_kind: str | None = None
+_demo_image_path = str(Path(__file__).resolve().parents[1] / "assets" / "demo-fog-road.jpg")
 _latest_payload: dict[str, Any] | None = None
 _session_history: deque[dict[str, Any]] = deque(maxlen=100)
 _session_usage = {name: 0 for name in ("DCP", "CAP", "CLAHE", "Retinex")}
@@ -103,9 +104,11 @@ async def _demo_stream() -> None:
                         await _broadcast({"type": "media_error", "message": "The MP4 was accepted but no video frames could be decoded."})
                         break
             else:
-                raw = np.zeros((360, 640, 3), dtype=np.uint8)
-                cv2.rectangle(raw, (100, 80), (540, 290), (45, 125, 220), -1)
-                fog = cv2.addWeighted(raw, 0.5, np.full_like(raw, 205), 0.5, 0)
+                fog = cv2.imread(_demo_image_path, cv2.IMREAD_COLOR)
+                if fog is None:
+                    raw = np.zeros((360, 640, 3), dtype=np.uint8)
+                    cv2.rectangle(raw, (100, 80), (540, 290), (45, 125, 220), -1)
+                    fog = cv2.addWeighted(raw, 0.5, np.full_like(raw, 205), 0.5, 0)
             result = await asyncio.to_thread(orchestrator.process_frame, fog, _frame_id, 30.0)
             metrics = result.metrics
             algorithm_images = dict(preview_cache)

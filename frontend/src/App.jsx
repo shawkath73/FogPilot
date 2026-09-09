@@ -123,17 +123,6 @@ export default function App() {
         request.upload.onprogress = event => {
           if (event.lengthComputable) setUpload(current => ({ ...current, phase: `Uploading ${Math.round(event.loaded / event.total * 100)}%`, progress: Math.round(event.loaded / event.total * 100) }));
         };
-        const chooseFile = async event => {
-          const file = event.target.files?.[0];
-          event.target.value = '';
-          await processFile(file);
-        };
-        const handleDrop = event => {
-          event.preventDefault();
-          setDropActive(false);
-          const file = event.dataTransfer.files?.[0];
-          if (file) processFile(file);
-        };
         request.onload = () => {
           let result = {};
           try { result = JSON.parse(request.responseText || '{}'); } catch { reject(new Error('Backend returned an invalid upload response')); return; }
@@ -148,6 +137,17 @@ export default function App() {
       setUpload({ busy: false, progress: 100, phase: 'Stream active', error: '', warning: '' });
     } catch (error) { setUpload({ busy: false, progress: 0, phase: '', error: error.message, warning: '' }); }
     finally { uploadRequest.current = null; }
+  };
+  const chooseFile = async event => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    await processFile(file);
+  };
+  const handleDrop = event => {
+    event.preventDefault();
+    setDropActive(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) processFile(file);
   };
   const cancelUpload = () => {
     uploadRequest.current?.abort();

@@ -40,6 +40,7 @@ export default function App() {
   const [mediaUrl, setMediaUrl] = useState('');
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [dropActive, setDropActive] = useState(false);
+  const fileInputRef = useRef(null);
   const uploadRequest = useRef(null);
 
   useEffect(() => {
@@ -103,9 +104,7 @@ export default function App() {
       setUpload(current => ({ ...current, error: error.message, warning: '' }));
     }
   };
-  const chooseFile = async event => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
+  const processFile = async file => {
     if (!file) return;
     setMediaPickerOpen(false);
     if (file.size > MAX_UPLOAD_BYTES) {
@@ -124,11 +123,16 @@ export default function App() {
         request.upload.onprogress = event => {
           if (event.lengthComputable) setUpload(current => ({ ...current, phase: `Uploading ${Math.round(event.loaded / event.total * 100)}%`, progress: Math.round(event.loaded / event.total * 100) }));
         };
+        const chooseFile = async event => {
+          const file = event.target.files?.[0];
+          event.target.value = '';
+          await processFile(file);
+        };
         const handleDrop = event => {
           event.preventDefault();
           setDropActive(false);
           const file = event.dataTransfer.files?.[0];
-          if (file) chooseFile({ target: { files: [file], value: '' } });
+          if (file) processFile(file);
         };
         request.onload = () => {
           let result = {};
@@ -235,12 +239,12 @@ export default function App() {
         <span className="eyebrow">Media input</span>
         <h2 id="picker-title">Load image or video</h2>
         <p className="picker-intro">Choose a local file, drag it here, or paste a direct media link. Both images and videos can be processed.</p>
-        <label className={`drop-zone${dropActive ? ' active' : ''}`} onDragOver={event => { event.preventDefault(); setDropActive(true); }} onDragLeave={() => setDropActive(false)} onDrop={handleDrop}>
+        <div className={`drop-zone${dropActive ? ' active' : ''}`} role="button" tabIndex="0" onClick={() => fileInputRef.current?.click()} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') fileInputRef.current?.click(); }} onDragOver={event => { event.preventDefault(); setDropActive(true); }} onDragLeave={() => setDropActive(false)} onDrop={handleDrop}>
           <i className="ui-icon upload-icon" aria-hidden="true" />
           <strong>Drop media here</strong>
           <span>or click to browse your device</span>
-          <input type="file" accept="image/*,video/*" onChange={chooseFile} />
-        </label>
+          <input ref={fileInputRef} type="file" accept="image/*,video/*" onChange={chooseFile} />
+        </div>
         <div className="picker-divider"><span>or use a direct link</span></div>
         <form className="media-url-form picker-url-form" onSubmit={loadMediaUrl}>
           <input type="url" value={mediaUrl} onChange={event => setMediaUrl(event.target.value)} placeholder="https://example.com/media.mp4" aria-label="Remote image or video URL" />

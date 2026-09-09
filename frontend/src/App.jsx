@@ -34,6 +34,7 @@ function reducer(state, action) {
 export default function App() {
   const [state, dispatch] = useReducer(reducer, initial);
   const [backendActive, setBackendActive] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [upload, setUpload] = useState({ busy: false, progress: 0, phase: '', error: '', warning: '' });
   const uploadRequest = useRef(null);
 
@@ -135,6 +136,7 @@ export default function App() {
       <button className="side-link selected">▦ <span>Dashboard</span></button>
       <button className="side-link" onClick={() => document.querySelector('.video-workspace')?.scrollIntoView({ behavior: 'smooth' })}>◉ <span>Live stream</span></button>
       <button className="side-link" onClick={() => document.querySelector('.metrics-workspace')?.scrollIntoView({ behavior: 'smooth' })}>⌁ <span>Analytics</span></button>
+      <button className="side-link" onClick={() => setGuideOpen(true)}>ⓘ <span>User guide</span></button>
       <span className="sidebar-caption">System</span>
       {['Sensor', 'Planner', 'Critic', 'Logger'].map(agent => <div className="agent-row" key={agent}><i />{agent}<small>{state.connected ? 'live' : 'idle'}</small></div>)}
       <div className="sidebar-fill" />
@@ -150,5 +152,22 @@ export default function App() {
       <section className="metrics-workspace"><div className="section-heading"><h2>Live analytics</h2><div><span>Last 100 points</span><button className="text-button" onClick={downloadReport}>Download report ↓</button></div></div><MetricsCharts history={state.history} usage={state.usage} /></section>
       <section className="bottom-grid"><EscalationLog items={state.escalations} /><ConfigPanel /></section>
     </main>
+    {guideOpen && <div className="guide-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setGuideOpen(false); }}>
+      <section className="guide-modal" role="dialog" aria-modal="true" aria-labelledby="guide-title">
+        <button className="guide-close" onClick={() => setGuideOpen(false)} aria-label="Close user guide">×</button>
+        <span className="eyebrow">FogPilot help</span>
+        <h2 id="guide-title">How the dashboard works</h2>
+        <p className="guide-intro">FogPilot watches each frame, chooses the most suitable dehazing method, checks the result, and reports the decision live.</p>
+        <div className="guide-sections">
+          <article><h3>1. Start a session</h3><p>Click <b>Start</b> to run the built-in fog-road demo, or use <b>Upload</b> for a JPG, PNG, MP4, MOV, AVI, MKV, or WebM file. Upload progress ends when the backend has validated the media and started streaming.</p></article>
+          <article><h3>2. Follow the agents</h3><p><b>Sensor</b> measures fog, brightness, complexity, and FPS headroom. <b>Planner</b> routes the frame to DCP, CAP, CLAHE, or Retinex. <b>Critic</b> checks quality and speed, then escalates when needed. <b>Logger</b> stores bounded history and session totals.</p></article>
+          <article><h3>3. Read the metrics</h3><p><b>Frames processed</b> is the total number of frames accepted by the pipeline. <b>Mean FPS</b> is measured processing speed. <b>30 FPS compliance</b> is the percentage of measured frames meeting the real-time target. <b>Escalations</b> counts frames that needed another algorithm.</p></article>
+          <article><h3>4. Understand the charts</h3><p><b>FPS over time</b> shows speed against the dashed 30 FPS target. <b>Quality metrics</b> shows FADE improvement and contrast gain. <b>Algorithm usage</b> shows routing distribution. <b>Routing map</b> shows the frame count handled by each algorithm.</p></article>
+          <article><h3>5. Tune the pipeline</h3><p>Open <b>Configuration / tuning</b> to change fog sensitivity, minimum quality improvement, slow-frame tolerance, and maximum escalations. Click <b>Apply changes</b>; updates affect new frames without restarting the service.</p></article>
+          <article><h3>6. Manage the session</h3><p>Use <b>Remove media</b> to stop the current stream and clear its visuals. Use <b>Download report</b> to save the current session summary as JSON. Refreshing the page restores the active session snapshot while the backend remains running.</p></article>
+        </div>
+        <div className="guide-legend"><span><i className="guide-dot live" />Live means the WebSocket is connected</span><span><i className="guide-dot warn" />Red output means the Critic flagged degradation</span></div>
+      </section>
+    </div>}
   </div>;
 }

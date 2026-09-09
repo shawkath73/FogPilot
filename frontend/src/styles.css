@@ -113,9 +113,10 @@ button { cursor: pointer; }
 .overview-bottom b { margin-left: 4px; color: #fff; }
 .overview-light strong { display: block; margin-top: 25px; font-size: 1.65rem; }
 .health { display: flex; align-items: center; gap: 7px; margin-top: 18px; color: #858a8e; font-size: .68rem; }
-.usage-summary .card-top { display: flex; justify-content: space-between; }
+.usage-summary { display: flex; flex-direction: column; justify-content: center; }
+.usage-summary .card-top { display: flex; justify-content: center; width: 100%; }
 .round-icon { color: #878d91; font-size: 1.2rem; }
-.usage-bars { margin: 19px 0 14px; }
+.usage-bars { width: min(100%, 275px); margin: 19px auto 0; }
 .usage-bars > div { display: grid; grid-template-columns: 52px 1fr 24px; align-items: center; gap: 8px; margin: 11px 0; font-size: .65rem; }
 .usage-bars i { height: 7px; overflow: hidden; border-radius: 8px; background: #e0e2e2; }
 .usage-bars i b { display: block; height: 100%; border-radius: inherit; background: var(--ink); }

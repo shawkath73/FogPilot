@@ -37,6 +37,7 @@ export default function App() {
   const [guideOpen, setGuideOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('dashboard');
   const [upload, setUpload] = useState({ busy: false, progress: 0, phase: '', error: '', warning: '' });
+  const [mediaUrl, setMediaUrl] = useState('');
   const uploadRequest = useRef(null);
 
   useEffect(() => {
@@ -139,6 +140,26 @@ export default function App() {
     uploadRequest.current?.abort();
     setUpload(current => ({ ...current, busy: false, phase: '', error: 'Upload cancelled.' }));
   };
+  const loadMediaUrl = async event => {
+    event.preventDefault();
+    const url = mediaUrl.trim();
+    if (!url) return;
+    dispatch({ type: 'media_removed' });
+    setUpload({ busy: true, progress: 0, phase: 'Loading remote media…', error: '', warning: '' });
+    try {
+      const response = await fetch(apiUrl('/api/media-url'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.detail || 'Remote media could not be loaded');
+      setUpload({ busy: false, progress: 100, phase: 'Stream active', error: '', warning: '' });
+      setMediaUrl('');
+    } catch (error) {
+      setUpload({ busy: false, progress: 0, phase: '', error: error.message, warning: '' });
+    }
+  };
   const removeMedia = async () => {
     try {
       const response = await fetch(apiUrl('/api/media'), { method: 'DELETE' });
@@ -190,6 +211,7 @@ export default function App() {
     </aside>
     <main className="dashboard">
       <header className="dashboard-header"><div><span className="eyebrow">Live monitoring</span><h1>Hi, FogPilot <span className="brand-spark" aria-hidden="true" /></h1><p>Adaptive dehazing, monitored in real time.</p></div><div className="header-actions"><span className={`connection ${state.connected ? 'online' : ''}`}><i />{state.connected ? 'Connected' : 'Reconnecting'}</span><button className="report-button" onClick={downloadReport}><i className="ui-icon download-icon" aria-hidden="true" />Report</button><button className="reset-statistics top-reset" onClick={resetStatistics}>Reset statistics</button><button className="primary-button" onClick={() => control('start')}><i className="ui-icon play-icon" aria-hidden="true" />Start</button><label className={`upload-button${upload.busy ? ' disabled' : ''}`}><i className="ui-icon upload-icon" aria-hidden="true" />{upload.busy ? `Uploading ${upload.progress}%` : 'Upload'}<input type="file" accept="image/*,video/*" onChange={chooseFile} disabled={upload.busy} /></label>{upload.busy && <button className="cancel-button" onClick={cancelUpload}>Cancel</button>}</div></header>
+      <form className="media-url-form" onSubmit={loadMediaUrl}><input type="url" value={mediaUrl} onChange={event => setMediaUrl(event.target.value)} placeholder="Paste an image or video URL" aria-label="Remote image or video URL" disabled={upload.busy} /><button className="report-button" type="submit" disabled={upload.busy || !mediaUrl.trim()}>Load link</button></form>
       {(upload.warning || upload.error) && <div className="upload-alert">{upload.warning || upload.error}</div>}
       {upload.busy && <div className="upload-progress"><span style={{ width: `${upload.progress}%` }} /></div>}
       {upload.busy && <div className="upload-status">{upload.phase || 'Preparing media…'}</div>}
@@ -205,7 +227,7 @@ export default function App() {
         <h2 id="guide-title">How the dashboard works</h2>
         <p className="guide-intro">FogPilot watches each frame, chooses the most suitable dehazing method, checks the result, and reports the decision live.</p>
         <div className="guide-sections">
-          <article><h3>1. Start a session</h3><p>Click <b>Start</b> to run the built-in fog-road demo, or use <b>Upload</b> for a JPG, PNG, MP4, MOV, AVI, MKV, or WebM file. Upload progress ends when the backend has validated the media and started streaming.</p></article>
+          <article><h3>1. Start a session</h3><p>Click <b>Start</b> to run the built-in fog-road demo, use <b>Upload</b> for a local file, or paste a direct image/video link into the remote media field. Remote images are held in memory and remote videos are opened from their URL, so large media does not need to be stored in the backend.</p></article>
           <article><h3>2. Follow the agents</h3><p><b>Sensor</b> measures fog, brightness, complexity, and FPS headroom. <b>Planner</b> routes the frame to DCP, CAP, CLAHE, or Retinex. <b>Critic</b> checks quality and speed, then escalates when needed. <b>Logger</b> stores bounded history and session totals.</p></article>
           <article><h3>3. Read the metrics</h3><p><b>Frames processed</b> is the total number of frames accepted by the pipeline. <b>Mean FPS</b> is measured processing speed. <b>30 FPS compliance</b> is the percentage of measured frames meeting the real-time target. <b>Escalations</b> counts frames that needed another algorithm.</p></article>
           <article><h3>4. Understand the charts</h3><p><b>FPS over time</b> shows speed against the dashed 30 FPS target. <b>Quality metrics</b> shows FADE improvement and contrast gain. <b>Algorithm usage</b> shows routing distribution. <b>Routing map</b> shows the frame count handled by each algorithm.</p></article>

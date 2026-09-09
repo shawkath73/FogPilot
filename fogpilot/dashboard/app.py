@@ -2,8 +2,12 @@
 
 import asyncio
 import base64
+import ipaddress
 import os
 import tempfile
+import urllib.error
+import urllib.parse
+import urllib.request
 from collections import deque
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -42,6 +46,7 @@ _running = False
 _frame_id = 0
 _video_path: str | None = None
 _media_kind: str | None = None
+_remote_image: np.ndarray | None = None
 _demo_image_path = str(Path(__file__).resolve().parents[1] / "assets" / "demo-fog-road.png")
 _latest_payload: dict[str, Any] | None = None
 _session_history: deque[dict[str, Any]] = deque(maxlen=100)
@@ -54,6 +59,10 @@ class ConfigUpdate(BaseModel):
     min_fade_improvement: float = Field(ge=0)
     max_consecutive_slow_frames: int = Field(ge=1)
     max_escalations: int = Field(ge=0)
+
+
+class MediaUrl(BaseModel):
+    url: str = Field(min_length=8, max_length=2048)
 
 
 def _image_data(frame: np.ndarray, size: tuple[int, int] = (320, 180), quality: int = 60) -> str:
@@ -76,9 +85,9 @@ async def _broadcast(payload: dict[str, Any]) -> None:
 
 
 async def _demo_stream() -> None:
-    global _frame_id, _video_path, _media_kind, _latest_payload
+    global _frame_id, _video_path, _media_kind, _remote_image, _latest_payload
     capture = cv2.VideoCapture(_video_path) if _video_path else None
-    still = cv2.imread(_video_path) if _video_path and _media_kind == "image" else None
+    still = _remote_image if _remote_image is not None else (cv2.imread(_video_path) if _video_path and _media_kind == "image" else None)
     preview_cache: dict[str, str] = {}
     if _media_kind == "video" and (capture is None or not capture.isOpened()):
         event("media_read_error", media_type="video", reason="video capture could not be opened")
@@ -169,7 +178,7 @@ async def _demo_stream() -> None:
 
 
 async def _stop_stream() -> None:
-    global _running, _stream_task, _video_path, _media_kind, _latest_payload
+    global _running, _stream_task, _video_path, _media_kind, _remote_image, _latest_payload
     _running = False
     task = _stream_task
     _stream_task = None
@@ -179,13 +188,14 @@ async def _stop_stream() -> None:
             await task
         except asyncio.CancelledError:
             pass
-    if _video_path:
+    if _video_path and _video_path.startswith(tempfile.gettempdir()):
         try:
             os.unlink(_video_path)
         except FileNotFoundError:
             pass
     _video_path = None
     _media_kind = None
+    _remote_image = None
     _latest_payload = None
     _session_history.clear()
     _session_escalations.clear()
@@ -281,7 +291,7 @@ def update_config(update: ConfigUpdate) -> dict[str, Any]:
 
 @app.post("/api/upload")
 async def upload_media(file: UploadFile = File(...)) -> dict[str, str]:
-    global _video_path, _media_kind, _running, _stream_task
+    global _video_path, _media_kind, _remote_image, _running, _stream_task
     video_extensions = {".mp4", ".mov", ".avi", ".mkv", ".webm"}
     image_extensions = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
     suffix = Path(file.filename or "").suffix.lower()
@@ -300,6 +310,7 @@ async def upload_media(file: UploadFile = File(...)) -> dict[str, str]:
             target.write(chunk)
     await file.close()
     _video_path = target.name
+    _remote_image = None
     _media_kind = "image" if suffix in image_extensions else "video"
     if _media_kind == "image":
         valid = await asyncio.to_thread(_valid_image, _video_path)
@@ -315,6 +326,66 @@ async def upload_media(file: UploadFile = File(...)) -> dict[str, str]:
         _stream_task = asyncio.create_task(_demo_stream())
     event("media_uploaded", filename=file.filename, media_type=_media_kind, bytes=total)
     return {"status": "accepted", "media_type": _media_kind, "filename": file.filename or "media"}
+
+
+def _validate_remote_url(value: str) -> str:
+    parsed = urllib.parse.urlparse(value.strip())
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        raise HTTPException(status_code=422, detail="media URL must use HTTP or HTTPS")
+    try:
+        address = ipaddress.ip_address(parsed.hostname)
+        if address.is_private or address.is_loopback or address.is_link_local or address.is_reserved:
+            raise HTTPException(status_code=422, detail="private or local media URLs are not allowed")
+    except ValueError:
+        pass
+    return value.strip()
+
+
+def _load_remote_image(url: str) -> np.ndarray:
+    request = urllib.request.Request(url, headers={"User-Agent": "FogPilot/1.0"})
+    with urllib.request.urlopen(request, timeout=20) as response:
+        content_length = response.headers.get("Content-Length")
+        if content_length and int(content_length) > 20 * 1024 * 1024:
+            raise ValueError("remote image is larger than 20 MB")
+        data = response.read(20 * 1024 * 1024 + 1)
+    if len(data) > 20 * 1024 * 1024:
+        raise ValueError("remote image is larger than 20 MB")
+    image = cv2.imdecode(np.frombuffer(data, dtype=np.uint8), cv2.IMREAD_COLOR)
+    if image is None:
+        raise ValueError("remote URL did not contain a decodable image")
+    return image
+
+
+@app.post("/api/media-url")
+async def load_media_url(media: MediaUrl) -> dict[str, str]:
+    global _video_path, _media_kind, _remote_image, _running, _stream_task
+    url = _validate_remote_url(media.url)
+    suffix = Path(urllib.parse.urlparse(url).path).suffix.lower()
+    image_extensions = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
+    video_extensions = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".m3u8"}
+    await _stop_stream()
+    if suffix in image_extensions:
+        try:
+            _remote_image = await asyncio.to_thread(_load_remote_image, url)
+        except (OSError, ValueError, urllib.error.URLError) as exc:
+            raise HTTPException(status_code=422, detail=f"remote image could not be loaded: {exc}") from exc
+        _video_path = url
+        _media_kind = "image"
+    else:
+        if suffix not in video_extensions:
+            raise HTTPException(status_code=415, detail="URL must point to a supported image or video")
+        _video_path = url
+        _media_kind = "video"
+        _remote_image = None
+        valid = await asyncio.to_thread(_valid_video, url)
+        if not valid:
+            _video_path = None
+            _media_kind = None
+            raise HTTPException(status_code=422, detail="remote video could not be opened or decoded by the backend")
+    _running = True
+    _stream_task = asyncio.create_task(_demo_stream())
+    event("media_url_loaded", media_type=_media_kind)
+    return {"status": "accepted", "media_type": _media_kind, "url": url}
 
 
 def _valid_image(path: str) -> bool:

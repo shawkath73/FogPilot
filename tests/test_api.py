@@ -51,6 +51,12 @@ def test_image_upload_starts_stream():
     assert response.status_code == 422
 
 
+def test_media_url_requires_http_https_and_supported_extension():
+    with TestClient(app) as client:
+        assert client.post("/api/media-url", json={"url": "file:///tmp/demo.png"}).status_code == 422
+        assert client.post("/api/media-url", json={"url": "https://example.com/demo.txt"}).status_code == 415
+
+
 def test_valid_image_upload_is_accepted():
     image = np.full((24, 24, 3), 180, dtype=np.uint8)
     success, encoded = cv2.imencode(".png", image)

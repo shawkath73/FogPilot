@@ -42,7 +42,7 @@ _running = False
 _frame_id = 0
 _video_path: str | None = None
 _media_kind: str | None = None
-_demo_image_path = str(Path(__file__).resolve().parents[1] / "assets" / "demo-fog-road.jpg")
+_demo_image_path = str(Path(__file__).resolve().parents[1] / "assets" / "demo-fog-road.png")
 _latest_payload: dict[str, Any] | None = None
 _session_history: deque[dict[str, Any]] = deque(maxlen=100)
 _session_usage = {name: 0 for name in ("DCP", "CAP", "CLAHE", "Retinex")}

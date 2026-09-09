@@ -118,7 +118,7 @@ button { cursor: pointer; }
 .algo-badge, .log-tag { padding: 5px 8px; border-radius: 99px; background: #d9f2ed; color: #187e70; font-size: .61rem; font-weight: 700; }
 .algo-badge.danger { background: #ffe1e1; color: #a33f4d; }
 
-.metrics-workspace .charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.metrics-workspace .charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
 .chart-card { overflow: hidden; min-height: 315px; background: var(--paper); }
 .chart-card.usage-card, .chart-card.routing-card { min-height: 370px; }
 .chart-card-body { height: 250px; padding: 8px 12px 14px; }
@@ -137,4 +137,5 @@ button { cursor: pointer; }
 
 @media (max-width: 1050px) { .overview-row { grid-template-columns: 1fr 1fr; }.usage-summary { grid-column: span 2; }.sidebar { flex-basis: 190px; width: 190px; }.dashboard { padding-left: 4px; padding-right: 4px; } }
 @media (max-width: 1000px) { .algorithm-output-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 760px) { .app-shell { display: block; padding: 10px; }.sidebar { position: static; width: 100%; height: auto; min-height: 0; margin-bottom: 18px; }.sidebar-fill, .agent-row, .sidebar-caption, .side-link:not(.selected) { display: none; }.dashboard { padding: 16px 4px 35px; }.dashboard-header, .header-actions { align-items: flex-start; flex-direction: column; }.header-actions { width: 100%; }.overview-row, .video-grid, .metrics-workspace .charts, .bottom-grid, .algorithm-output-grid { grid-template-columns: 1fr; }.usage-summary { grid-column: auto; }.section-heading { align-items: flex-start; flex-direction: column; }.section-heading > div { width: 100%; justify-content: space-between; } }
+@media (max-width: 1000px) { .metrics-workspace .charts { gap: 24px; } }
+@media (max-width: 760px) { .app-shell { display: block; padding: 10px; }.sidebar { position: static; width: 100%; height: auto; min-height: 0; margin-bottom: 18px; }.sidebar-fill, .agent-row, .sidebar-caption, .side-link:not(.selected) { display: none; }.dashboard { padding: 16px 4px 35px; }.dashboard-header, .header-actions { align-items: flex-start; flex-direction: column; }.header-actions { width: 100%; }.overview-row, .video-grid, .metrics-workspace .charts, .bottom-grid, .algorithm-output-grid { grid-template-columns: 1fr; gap: 18px; }.usage-summary { grid-column: auto; }.section-heading { align-items: flex-start; flex-direction: column; }.section-heading > div { width: 100%; justify-content: space-between; } }

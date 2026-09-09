@@ -38,10 +38,10 @@ export default function VideoPanels({ frame }) {
               <span>{algorithm}</span>
               <small>{active ? 'Active route' : 'Available worker'}</small>
             </div>
-            {frame?.algorithm_images?.[algorithm] ? (
-              <img src={frame.algorithm_images[algorithm]} alt={`${algorithm} output`} />
+            {frame?.algorithm_images?.[algorithm] || (active && frame?.output_image) ? (
+              <img src={frame.algorithm_images?.[algorithm] || frame.output_image} alt={`${algorithm} output`} />
             ) : (
-              <div className="algorithm-output-empty">Waiting for frame</div>
+              <div className="algorithm-output-empty">{frame ? 'Preview unavailable' : 'Waiting for frame'}</div>
             )}
           </div>
         );

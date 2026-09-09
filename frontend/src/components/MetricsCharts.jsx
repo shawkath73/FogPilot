@@ -27,7 +27,7 @@ export default function MetricsCharts({ history, usage }) {
   const pie = Object.entries(usage).filter(([, v]) => v > 0).map(([name, value]) => ({ name, value }));
 
   return (
-    <>
+    <div className="charts">
       <div className="chart-card chart-card-wide">
         <div className="chart-card-header">FPS over time</div>
         <div className="chart-card-body">
@@ -92,6 +92,6 @@ export default function MetricsCharts({ history, usage }) {
             </ResponsiveContainer>
           </div>
         </div>
-    </>
+    </div>
   );
 }

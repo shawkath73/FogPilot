@@ -47,12 +47,12 @@ button { cursor: pointer; }
 .sidebar-caption { margin: 14px 12px 8px; color: #a0a4a8; font-size: .62rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
 .side-link { display: flex; align-items: center; gap: 11px; width: 100%; padding: 11px 12px; border: 0; border-radius: 12px; background: transparent; color: #686d72; text-align: left; font-size: .77rem; font-weight: 600; }
 .side-link:hover, .side-link.selected { background: var(--ink); color: #fff; }
-.ui-icon { position: relative; display: inline-block; flex: 0 0 17px; width: 17px; height: 17px; color: currentColor; }
+.ui-icon { position: relative; display: inline-block; flex: 0 0 17px; width: 17px; height: 17px; margin: 0; color: currentColor; vertical-align: middle; }
 .grid-icon { background: linear-gradient(currentColor 0 0) 0 0/6px 6px, linear-gradient(currentColor 0 0) 100% 0/6px 6px, linear-gradient(currentColor 0 0) 0 100%/6px 6px, linear-gradient(currentColor 0 0) 100% 100%/6px 6px; background-repeat: no-repeat; }
 .stream-icon { border: 2px solid currentColor; border-radius: 50%; }.stream-icon::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: currentColor; }
 .chart-icon { border-bottom: 2px solid currentColor; border-left: 2px solid currentColor; }.chart-icon::after { content: ''; position: absolute; left: 3px; top: 3px; width: 9px; height: 7px; border-top: 2px solid currentColor; border-right: 2px solid currentColor; transform: skewY(-28deg); }
 .info-icon { border: 2px solid currentColor; border-radius: 50%; }.info-icon::after { content: 'i'; position: absolute; left: 5px; top: -1px; font-size: 11px; font-style: normal; font-weight: 700; }
-.stop-icon { width: 11px; height: 11px; margin: 3px; border-radius: 2px; background: currentColor; }.play-icon { border-left: 7px solid currentColor; border-top: 5px solid transparent; border-bottom: 5px solid transparent; width: 0; height: 0; }.upload-icon, .download-icon { width: 14px; height: 14px; border: 2px solid currentColor; border-radius: 3px; }.upload-icon::after, .download-icon::after { content: ''; position: absolute; left: 4px; width: 3px; height: 8px; border-left: 2px solid currentColor; }.upload-icon::after { top: 1px; }.download-icon::after { bottom: 1px; }.brand-spark { display: inline-block; width: 13px; height: 13px; margin-left: 4px; border: 3px solid var(--teal); border-radius: 50%; box-shadow: 0 0 0 3px #16a89433; }
+.stop-icon { width: 11px; height: 11px; margin: 0 3px; border-radius: 2px; background: currentColor; }.play-icon { flex-basis: 0; width: 0; height: 0; margin: 0 2px 0 1px; border-left: 7px solid currentColor; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }.upload-icon, .download-icon { width: 14px; height: 14px; border: 2px solid currentColor; border-radius: 3px; }.upload-icon::after, .download-icon::after { content: ''; position: absolute; left: 4px; width: 3px; height: 8px; border-left: 2px solid currentColor; }.upload-icon::after { top: 1px; }.download-icon::after { bottom: 1px; }.brand-spark { display: none !important; }
 .sidebar-fill { flex: 1; }
 .agent-row { display: flex; align-items: center; gap: 9px; padding: 7px 12px; color: #72777c; font-size: .74rem; }
 .agent-row i { width: 7px; height: 7px; border-radius: 50%; background: #1db8a3; box-shadow: 0 0 0 3px #1db8a322; }
@@ -67,7 +67,8 @@ button { cursor: pointer; }
 .connection { display: inline-flex; align-items: center; gap: 7px; margin-right: 5px; color: #93989d; font-size: .69rem; }
 .connection i, .health i { width: 7px; height: 7px; border-radius: 50%; background: #f0a31a; }
 .connection.online i, .health i { background: var(--teal); box-shadow: 0 0 0 3px #16a89422; }
-.primary-button, .upload-button, .report-button, .cancel-button { padding: 10px 15px; border-radius: 22px; font-size: .7rem; font-weight: 700; }
+.primary-button, .upload-button, .report-button, .cancel-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 42px; padding: 10px 15px; border-radius: 22px; font-size: .7rem; font-weight: 700; line-height: 1; white-space: nowrap; }
+.primary-button .ui-icon, .upload-button .ui-icon, .report-button .ui-icon, .cancel-button .ui-icon { align-self: center; }
 .primary-button { border: 0; background: var(--ink); color: #fff; }
 .upload-button { border: 1px solid #d3d6d7; background: #fafafa; color: #242629; }
 .upload-button input { display: none; }

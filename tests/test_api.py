@@ -28,6 +28,13 @@ def test_summary_includes_processed_frame_count():
     assert "frames_processed" in response.json()
 
 
+def test_reset_statistics_returns_empty_report():
+    response = TestClient(app).post("/api/reset")
+    assert response.status_code == 200
+    assert response.json() == {"status": "reset"}
+    assert TestClient(app).get("/api/report").json()["frames_processed"] == 0
+
+
 def test_image_upload_starts_stream():
     client = TestClient(app)
     response = client.post(

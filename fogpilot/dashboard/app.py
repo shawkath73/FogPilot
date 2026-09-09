@@ -247,6 +247,23 @@ async def stop() -> dict[str, str]:
     return {"status": "stopped"}
 
 
+@app.post("/api/reset")
+async def reset_statistics() -> dict[str, str]:
+    orchestrator.logger.reset()
+    _session_history.clear()
+    _session_escalations.clear()
+    for algorithm in _session_usage:
+        _session_usage[algorithm] = 0
+    await _broadcast({
+        "type": "snapshot",
+        "history": [],
+        "usage": dict(_session_usage),
+        "escalations": [],
+        "summary": orchestrator.logger.report(),
+    })
+    return {"status": "reset"}
+
+
 @app.post("/api/config")
 def update_config(update: ConfigUpdate) -> dict[str, Any]:
     updated = Settings(

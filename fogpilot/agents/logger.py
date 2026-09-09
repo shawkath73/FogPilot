@@ -26,6 +26,12 @@ critic events without changing upstream data."""
             self.escalations.append(verdict.escalation_instruction)
             self.total_escalations += 1
 
+    def reset(self) -> None:
+        self.records.clear()
+        self.escalations.clear()
+        self.total_frames = 0
+        self.total_escalations = 0
+
     def summary(self) -> dict[str, Any]:
         algorithms = ("DCP", "CAP", "CLAHE", "Retinex")
         total = len(self.records)

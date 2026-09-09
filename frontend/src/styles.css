@@ -60,12 +60,12 @@ button { cursor: pointer; }
 .agent-row i { width: 7px; height: 7px; border-radius: 50%; background: #1db8a3; box-shadow: 0 0 0 3px #1db8a322; }
 .agent-row small { margin-left: auto; color: #a3a7ab; font-size: .61rem; }
 .dashboard { width: min(1420px, 100%); min-width: 0; padding: 22px 18px 55px; margin: auto; }
-.dashboard-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 22px; }
+.dashboard-header { display: flex; align-items: center; justify-content: space-between; gap: 22px; }
 .eyebrow, .card-label { color: #92979b; font-size: .66rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
 .dashboard-header h1 { display: flex; align-items: center; gap: 10px; margin: 8px 0 5px; color: var(--ink); font-size: clamp(1.7rem, 2.55vw, 2.35rem); letter-spacing: -.06em; white-space: nowrap; }
 .dashboard-header h1 em { color: var(--teal); font-style: normal; }
 .dashboard-header p { margin: 0; color: #858b90; font-size: .78rem; }
-.header-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 9px; margin-top: 49px; }
+.header-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 9px; margin-top: 0; }
 .connection { display: inline-flex; align-items: center; gap: 7px; margin-right: 5px; color: #93989d; font-size: .69rem; }
 .connection i, .health i { width: 7px; height: 7px; border-radius: 50%; background: #f0a31a; }
 .connection.online i, .health i { background: var(--teal); box-shadow: 0 0 0 3px #16a89422; }

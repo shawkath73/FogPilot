@@ -54,7 +54,7 @@ button { cursor: pointer; }
 .stream-icon { border: 2px solid currentColor; border-radius: 50%; }.stream-icon::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: currentColor; }
 .chart-icon { border-bottom: 2px solid currentColor; border-left: 2px solid currentColor; }.chart-icon::after { content: ''; position: absolute; left: 3px; top: 3px; width: 9px; height: 7px; border-top: 2px solid currentColor; border-right: 2px solid currentColor; transform: skewY(-28deg); }
 .info-icon { border: 2px solid currentColor; border-radius: 50%; }.info-icon::after { content: 'i'; position: absolute; left: 5px; top: -1px; font-size: 11px; font-style: normal; font-weight: 700; }
-.stop-icon { width: 11px; height: 11px; margin: 0 3px; border-radius: 2px; background: currentColor; }.play-icon { flex-basis: 0; width: 0; height: 0; margin: 0 2px 0 1px; border-left: 7px solid currentColor; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }.upload-icon, .download-icon { width: 14px; height: 14px; border: 2px solid currentColor; border-radius: 3px; }.upload-icon::after, .download-icon::after { content: ''; position: absolute; left: 4px; width: 3px; height: 8px; border-left: 2px solid currentColor; }.upload-icon::after { top: 1px; }.download-icon::after { bottom: 1px; }.brand-spark { display: inline-block !important; position: relative; top: -0.08em; width: 15px; height: 15px; margin-left: 7px; border: 3px solid var(--teal); border-radius: 50%; box-shadow: 0 0 0 3px #16a89433; vertical-align: middle; }
+.stop-icon { width: 11px; height: 11px; margin: 0 3px; border-radius: 2px; background: currentColor; }.play-icon { flex-basis: 0; width: 0; height: 0; margin: 0 2px 0 1px; border-left: 7px solid currentColor; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }.upload-icon, .download-icon { width: 14px; height: 14px; border: 2px solid currentColor; border-radius: 3px; }.upload-icon::after, .download-icon::after { content: ''; position: absolute; left: 4px; width: 3px; height: 8px; border-left: 2px solid currentColor; }.upload-icon::after { top: 1px; }.download-icon::after { bottom: 1px; }.brand-spark { display: inline-block !important; position: static; flex: 0 0 15px; width: 15px; height: 15px; margin-left: 2px; border: 3px solid var(--teal); border-radius: 50%; box-shadow: 0 0 0 3px #16a89433; vertical-align: middle; }
 .sidebar-fill { flex: 1; }
 .agent-row { display: flex; align-items: center; gap: 9px; padding: 7px 12px; color: #72777c; font-size: .74rem; }
 .agent-row i { width: 7px; height: 7px; border-radius: 50%; background: #1db8a3; box-shadow: 0 0 0 3px #1db8a322; }
@@ -62,7 +62,7 @@ button { cursor: pointer; }
 .dashboard { width: min(1420px, 100%); min-width: 0; padding: 22px 18px 55px; margin: auto; }
 .dashboard-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 22px; }
 .eyebrow, .card-label { color: #92979b; font-size: .66rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-.dashboard-header h1 { margin: 8px 0 5px; color: var(--ink); font-size: clamp(1.8rem, 3vw, 2.7rem); letter-spacing: -.06em; }
+.dashboard-header h1 { display: flex; align-items: center; gap: 10px; margin: 8px 0 5px; color: var(--ink); font-size: clamp(1.7rem, 2.55vw, 2.35rem); letter-spacing: -.06em; white-space: nowrap; }
 .dashboard-header h1 em { color: var(--teal); font-style: normal; }
 .dashboard-header p { margin: 0; color: #858b90; font-size: .78rem; }
 .header-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 9px; margin-top: 8px; }
@@ -183,7 +183,7 @@ button { cursor: pointer; }
   .sidebar > .side-link:last-child { display: none; }
   .dashboard { padding: 12px 2px 35px; }
   .dashboard-header { align-items: stretch; flex-direction: column; gap: 14px; }
-  .dashboard-header h1 { font-size: clamp(1.8rem, 9vw, 2.35rem); }
+  .dashboard-header h1 { gap: 8px; font-size: clamp(1.35rem, 7.5vw, 2rem); letter-spacing: -.055em; }
   .header-actions { width: 100%; max-width: none; align-items: stretch; justify-content: flex-start; gap: 8px; }
   .connection { margin: 0 0 3px; }
   .primary-button, .upload-button, .report-button, .cancel-button, .top-reset { flex: 1 1 calc(50% - 8px); }
@@ -209,6 +209,8 @@ button { cursor: pointer; }
   .sidebar > .side-link { gap: 7px; font-size: .7rem; }
   .sidebar > .side-link .ui-icon { flex-basis: 15px; width: 15px; height: 15px; }
   .dashboard { padding-left: 0; padding-right: 0; }
+  .dashboard-header h1 { gap: 6px; font-size: clamp(1.18rem, 7.1vw, 1.55rem); }
+  .brand-spark { flex-basis: 12px; width: 12px; height: 12px; border-width: 2px; }
   .header-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .connection { grid-column: 1 / -1; }
   .primary-button, .upload-button, .report-button, .cancel-button, .top-reset { width: 100%; }

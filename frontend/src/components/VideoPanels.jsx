@@ -23,7 +23,7 @@ export default function VideoPanels({ frame }) {
           ) : (
             <div className="video-empty">
               <span className="video-empty-icon" aria-hidden="true" />
-              No video loaded
+              No media loaded
             </div>
           )}
         </div>

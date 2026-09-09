@@ -22,7 +22,7 @@ export default function VideoPanels({ frame }) {
             <img src={src} alt={title} />
           ) : (
             <div className="video-empty">
-              <span className="video-empty-icon">📹</span>
+              <span className="video-empty-icon" aria-hidden="true" />
               No video loaded
             </div>
           )}

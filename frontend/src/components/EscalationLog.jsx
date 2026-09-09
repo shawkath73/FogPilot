@@ -29,7 +29,7 @@ export default function EscalationLog({ items }) {
           </div>
         ) : (
           <div className="log-empty">
-            <span className="log-empty-icon">✓</span>
+            <span className="log-empty-icon" aria-hidden="true" />
             No escalations recorded
           </div>
         )}

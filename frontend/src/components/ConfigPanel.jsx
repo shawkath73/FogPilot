@@ -74,7 +74,7 @@ export default function ConfigPanel() {
               {saving ? 'Applying…' : 'Apply changes'}
             </button>
           </div>
-          {status.message && <div className={`config-status ${status.type}`}>{status.type === 'success' ? '✓ ' : '⚠ '}{status.message}</div>}
+          {status.message && <div className={`config-status ${status.type}`}><i className={`status-icon ${status.type}`} aria-hidden="true" />{status.message}</div>}
         </div>
       )}
     </div>

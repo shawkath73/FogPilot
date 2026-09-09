@@ -4,6 +4,7 @@ import asyncio
 import base64
 import os
 import tempfile
+from collections import deque
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
@@ -41,6 +42,10 @@ _running = False
 _frame_id = 0
 _video_path: str | None = None
 _media_kind: str | None = None
+_latest_payload: dict[str, Any] | None = None
+_session_history: deque[dict[str, Any]] = deque(maxlen=100)
+_session_usage = {name: 0 for name in ("DCP", "CAP", "CLAHE", "Retinex")}
+_session_escalations: deque[dict[str, Any]] = deque(maxlen=20)
 
 
 class ConfigUpdate(BaseModel):
@@ -70,7 +75,7 @@ async def _broadcast(payload: dict[str, Any]) -> None:
 
 
 async def _demo_stream() -> None:
-    global _frame_id, _video_path, _media_kind
+    global _frame_id, _video_path, _media_kind, _latest_payload
     capture = cv2.VideoCapture(_video_path) if _video_path else None
     still = cv2.imread(_video_path) if _video_path and _media_kind == "image" else None
     if _media_kind == "video" and (capture is None or not capture.isOpened()):
@@ -123,6 +128,20 @@ async def _demo_stream() -> None:
             except Exception as exc:
                 event("database_record_error", error=str(exc), frame_id=_frame_id)
             session_summary = orchestrator.logger.report()
+            _latest_payload = payload
+            _session_history.append({
+                "frame_id": payload["frame_id"],
+                "fps": payload["fps"],
+                "fade_improvement": payload["fade_improvement"],
+                "contrast_gain": payload["contrast_gain"],
+            })
+            _session_usage[payload["algorithm"]] += 1
+            if payload["escalation"]:
+                _session_escalations.appendleft({
+                    "frame_id": payload["frame_id"],
+                    "reason": payload["escalation"]["reason"],
+                    "algorithm": payload["algorithm"],
+                })
             await _broadcast(payload)
             await _broadcast({"type": "summary", **session_summary})
             await asyncio.sleep(1 / 10)
@@ -132,7 +151,7 @@ async def _demo_stream() -> None:
 
 
 async def _stop_stream() -> None:
-    global _running, _stream_task, _video_path, _media_kind
+    global _running, _stream_task, _video_path, _media_kind, _latest_payload
     _running = False
     task = _stream_task
     _stream_task = None
@@ -149,6 +168,11 @@ async def _stop_stream() -> None:
             pass
     _video_path = None
     _media_kind = None
+    _latest_payload = None
+    _session_history.clear()
+    _session_escalations.clear()
+    for algorithm in _session_usage:
+        _session_usage[algorithm] = 0
 
 
 @app.get("/")
@@ -289,7 +313,15 @@ async def websocket_stream(websocket: WebSocket) -> None:
     await websocket.accept()
     _clients.add(websocket)
     try:
-        await websocket.send_json({"type": "summary", **orchestrator.logger.report()})
+        if _latest_payload:
+            await websocket.send_json(_latest_payload)
+        await websocket.send_json({
+            "type": "snapshot",
+            "history": list(_session_history),
+            "usage": _session_usage,
+            "escalations": list(_session_escalations),
+            "summary": orchestrator.logger.report(),
+        })
         while True:
             await websocket.receive_text()
     except WebSocketDisconnect:

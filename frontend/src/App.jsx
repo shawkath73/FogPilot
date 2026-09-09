@@ -12,6 +12,14 @@ const initial = { connected: false, frame: null, history: [], usage: { DCP: 0, C
 function reducer(state, action) {
   if (action.type === 'connected') return { ...state, connected: action.value };
   if (action.type === 'summary') return { ...state, summary: { ...state.summary, ...action.value } };
+  if (action.type === 'snapshot') return {
+    ...state,
+    frame: action.value.frame || state.frame,
+    history: action.value.history || [],
+    usage: action.value.usage || state.usage,
+    escalations: action.value.escalations || [],
+    summary: { ...state.summary, ...(action.value.summary || {}) },
+  };
   if (action.type === 'media_removed') return { ...state, frame: null, history: [], usage: { DCP: 0, CAP: 0, CLAHE: 0, Retinex: 0 }, escalations: [] };
   if (action.type === 'frame') {
     const frame = action.value;
@@ -47,6 +55,7 @@ export default function App() {
       socket.onmessage = event => {
         const data = JSON.parse(event.data);
         if (data.type === 'summary') dispatch({ type: 'summary', value: data });
+        else if (data.type === 'snapshot') dispatch({ type: 'snapshot', value: data });
         else if (data.type === 'media_error') setUpload({ busy: false, progress: 0, phase: '', error: data.message, warning: '' });
         else dispatch({ type: 'frame', value: data });
       };

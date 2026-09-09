@@ -45,8 +45,10 @@ button { cursor: pointer; }
 .brand { display: flex; align-items: center; gap: 10px; padding: 0 12px 35px; font-size: 1.2rem; }
 .brand-mark { display: grid; place-items: center; width: 31px; height: 31px; border-radius: 10px; background: var(--ink); color: #fff; font: 700 .68rem 'JetBrains Mono'; }
 .sidebar-caption { margin: 14px 12px 8px; color: #a0a4a8; font-size: .62rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-.side-link { display: flex; align-items: center; gap: 11px; width: 100%; padding: 11px 12px; border: 0; border-radius: 12px; background: transparent; color: #686d72; text-align: left; font-size: .77rem; font-weight: 600; }
-.side-link:hover, .side-link.selected { background: var(--ink); color: #fff; }
+.side-link { display: flex; align-items: center; gap: 11px; width: 100%; padding: 11px 12px; border: 0; border-radius: 12px; background: transparent; color: #686d72; text-align: left; font-size: .77rem; font-weight: 600; transition: background-color .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease; }
+.side-link:hover, .side-link:focus-visible, .side-link.selected { background: var(--ink); color: #fff; }
+.side-link:hover, .side-link:focus-visible { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(23,24,27,.12); }
+.side-link:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
 .ui-icon { position: relative; display: inline-block; flex: 0 0 17px; width: 17px; height: 17px; margin: 0; color: currentColor; vertical-align: middle; }
 .grid-icon { background: linear-gradient(currentColor 0 0) 0 0/6px 6px, linear-gradient(currentColor 0 0) 100% 0/6px 6px, linear-gradient(currentColor 0 0) 0 100%/6px 6px, linear-gradient(currentColor 0 0) 100% 100%/6px 6px; background-repeat: no-repeat; }
 .stream-icon { border: 2px solid currentColor; border-radius: 50%; }.stream-icon::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: currentColor; }

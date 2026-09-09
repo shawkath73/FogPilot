@@ -35,6 +35,13 @@ def test_reset_statistics_returns_empty_report():
     assert TestClient(app).get("/api/report").json()["frames_processed"] == 0
 
 
+def test_session_controls_and_media_removal():
+    with TestClient(app) as client:
+        assert client.post("/api/start").json()["status"] == "running"
+        assert client.post("/api/stop").json()["status"] == "stopped"
+        assert client.delete("/api/media").json()["status"] == "removed"
+
+
 def test_image_upload_starts_stream():
     client = TestClient(app)
     response = client.post(

@@ -67,7 +67,19 @@ export default function App() {
     return () => { stopped = true; socket?.close(); };
   }, []);
 
-  const control = async path => { await fetch(apiUrl(`/api/${path}`), { method: 'POST' }); };
+  const control = async path => {
+    try {
+      const response = await fetch(apiUrl(`/api/${path}`), { method: 'POST' });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.detail || `Could not ${path} the session`);
+      if (path === 'stop') {
+        dispatch({ type: 'media_removed' });
+        setUpload({ busy: false, progress: 0, phase: '', error: '', warning: '' });
+      }
+    } catch (error) {
+      setUpload(current => ({ ...current, error: error.message, warning: '' }));
+    }
+  };
   const chooseFile = async event => {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -128,13 +140,18 @@ export default function App() {
     }
   };
   const downloadReport = async () => {
-    const response = await fetch(apiUrl('/api/report'));
-    const blob = new Blob([JSON.stringify(await response.json(), null, 2)], { type: 'application/json' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `fogpilot-report-${new Date().toISOString().slice(0, 10)}.json`;
-    link.click();
-    URL.revokeObjectURL(link.href);
+    try {
+      const response = await fetch(apiUrl('/api/report'));
+      const report = await response.json();
+      if (!response.ok) throw new Error(report.detail || 'Could not download report');
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }));
+      link.download = `fogpilot-report-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    } catch (error) {
+      setUpload(current => ({ ...current, error: error.message, warning: '' }));
+    }
   };
 
   return <div className="app-shell">

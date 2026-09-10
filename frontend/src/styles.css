@@ -198,7 +198,9 @@ button { cursor: pointer; }
   .primary-button, .upload-button, .report-button, .cancel-button, .top-reset { flex: 1 1 calc(50% - 8px); }
   .media-url-form { max-width: none; }
   .media-url-form input { width: 100%; }
-  .overview-row, .video-grid, .metrics-workspace .charts, .bottom-grid, .algorithm-output-grid, .guide-sections { grid-template-columns: 1fr; gap: 18px; }
+  .overview-row, .video-grid, .metrics-workspace .charts, .bottom-grid, .algorithm-output-grid, .guide-sections { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .overview-row > *, .video-grid > *, .bottom-grid > * { width: 100%; min-width: 0; }
+  .overview-row .usage-summary { grid-column: auto; }
   .overview-values { gap: 24px; }
   .overview-values b { font-size: 1.8rem; }
   .section-heading { align-items: flex-start; flex-direction: column; }

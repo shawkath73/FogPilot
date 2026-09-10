@@ -40,6 +40,7 @@ export default function App() {
   const [mediaUrl, setMediaUrl] = useState('');
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [dropActive, setDropActive] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const fileInputRef = useRef(null);
   const uploadRequest = useRef(null);
 
@@ -211,20 +212,21 @@ export default function App() {
 
   return <div className="app-shell">
     {!backendActive && <div className="boot-screen"><div className="boot-card"><div className="loader-ring" /><b>Starting FogPilot</b><p>Waiting for the backend to become active…</p><small>This screen closes automatically.</small></div></div>}
-    <aside className="sidebar">
+    {mobileNavOpen && <button className="mobile-nav-backdrop" aria-label="Close navigation" onClick={() => setMobileNavOpen(false)} />}
+    <aside className={`sidebar${mobileNavOpen ? ' mobile-open' : ''}`}>
       <div className="brand"><div className="brand-mark">FP</div><b>FogPilot</b></div>
       <span className="sidebar-caption">Monitoring</span>
-      <button className={`side-link${!guideOpen && activeSection === 'dashboard' ? ' selected' : ''}`} onClick={() => document.querySelector('.overview-row')?.scrollIntoView({ behavior: 'smooth' })}><i className="ui-icon grid-icon" aria-hidden="true" /><span>Dashboard</span></button>
-      <button className={`side-link${!guideOpen && activeSection === 'stream' ? ' selected' : ''}`} onClick={() => document.querySelector('.video-workspace')?.scrollIntoView({ behavior: 'smooth' })}><i className="ui-icon stream-icon" aria-hidden="true" /><span>Live stream</span></button>
-      <button className={`side-link${!guideOpen && activeSection === 'analytics' ? ' selected' : ''}`} onClick={() => document.querySelector('.metrics-workspace')?.scrollIntoView({ behavior: 'smooth' })}><i className="ui-icon chart-icon" aria-hidden="true" /><span>Analytics</span></button>
-      <button className={`side-link${guideOpen ? ' selected' : ''}`} onClick={() => setGuideOpen(true)}><i className="ui-icon info-icon" aria-hidden="true" /><span>User guide</span></button>
+      <button className={`side-link${!guideOpen && activeSection === 'dashboard' ? ' selected' : ''}`} onClick={() => { setMobileNavOpen(false); document.querySelector('.overview-row')?.scrollIntoView({ behavior: 'smooth' }); }}><i className="ui-icon grid-icon" aria-hidden="true" /><span>Dashboard</span></button>
+      <button className={`side-link${!guideOpen && activeSection === 'stream' ? ' selected' : ''}`} onClick={() => { setMobileNavOpen(false); document.querySelector('.video-workspace')?.scrollIntoView({ behavior: 'smooth' }); }}><i className="ui-icon stream-icon" aria-hidden="true" /><span>Live stream</span></button>
+      <button className={`side-link${!guideOpen && activeSection === 'analytics' ? ' selected' : ''}`} onClick={() => { setMobileNavOpen(false); document.querySelector('.metrics-workspace')?.scrollIntoView({ behavior: 'smooth' }); }}><i className="ui-icon chart-icon" aria-hidden="true" /><span>Analytics</span></button>
+      <button className={`side-link${guideOpen ? ' selected' : ''}`} onClick={() => { setMobileNavOpen(false); setGuideOpen(true); }}><i className="ui-icon info-icon" aria-hidden="true" /><span>User guide</span></button>
       <span className="sidebar-caption">System</span>
       {['Sensor', 'Planner', 'Critic', 'Logger'].map(agent => <div className="agent-row" key={agent}><i />{agent}<small>{state.connected ? 'live' : 'idle'}</small></div>)}
       <div className="sidebar-fill" />
       <button className="side-link" onClick={() => control('stop')}><i className="ui-icon stop-icon" aria-hidden="true" /><span>Stop session</span></button>
     </aside>
     <main className="dashboard">
-      <header className="dashboard-header"><div><span className="eyebrow">Live monitoring</span><h1>FogPilot Command Center <span className="brand-spark" aria-hidden="true" /></h1><p>Adaptive dehazing, monitored in real time.</p></div><div className="header-actions"><span className={`connection ${state.connected ? 'online' : ''}`}><i />{state.connected ? 'Connected' : 'Reconnecting'}</span><button className="report-button" onClick={downloadReport}><i className="ui-icon download-icon" aria-hidden="true" />Report</button><button className="reset-statistics top-reset" onClick={resetStatistics}>Reset statistics</button><button className="primary-button" onClick={() => control('start')}><i className="ui-icon play-icon" aria-hidden="true" />Start</button><button className={`upload-button${upload.busy ? ' disabled' : ''}`} onClick={() => setMediaPickerOpen(true)} disabled={upload.busy}><i className="ui-icon upload-icon" aria-hidden="true" />{upload.busy ? `Loading ${upload.progress}%` : 'Upload'}</button>{upload.busy && <button className="cancel-button" onClick={cancelUpload}>Cancel</button>}</div></header>
+      <header className="dashboard-header"><div className="title-row"><button className="mobile-menu-button" aria-label="Open navigation" aria-expanded={mobileNavOpen} onClick={() => setMobileNavOpen(true)}><span /><span /><span /></button><div><span className="eyebrow">Live monitoring</span><h1>FogPilot Command Center <span className="brand-spark" aria-hidden="true" /></h1><p>Adaptive dehazing, monitored in real time.</p></div></div><div className="header-actions"><span className={`connection ${state.connected ? 'online' : ''}`}><i />{state.connected ? 'Connected' : 'Reconnecting'}</span><button className="report-button" onClick={downloadReport}><i className="ui-icon download-icon" aria-hidden="true" />Report</button><button className="reset-statistics top-reset" onClick={resetStatistics}>Reset statistics</button><button className="primary-button" onClick={() => control('start')}><i className="ui-icon play-icon" aria-hidden="true" />Start</button><button className={`upload-button${upload.busy ? ' disabled' : ''}`} onClick={() => setMediaPickerOpen(true)} disabled={upload.busy}><i className="ui-icon upload-icon" aria-hidden="true" />{upload.busy ? `Loading ${upload.progress}%` : 'Upload'}</button>{upload.busy && <button className="cancel-button" onClick={cancelUpload}>Cancel</button>}</div></header>
       {(upload.warning || upload.error) && <div className="upload-alert">{upload.warning || upload.error}</div>}
       {upload.busy && <div className="upload-progress"><span style={{ width: `${upload.progress}%` }} /></div>}
       {upload.busy && <div className="upload-status">{upload.phase || 'Preparing media…'}</div>}
